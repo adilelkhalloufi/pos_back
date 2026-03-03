@@ -1,0 +1,15 @@
+[
+    { "name": "Carte Bancaire" },
+    { "name": "Chèque" },
+    { "name": "Espèces" },
+    { "name": "Virement" },
+    { "name": "Traite" },
+    { "name": "Prélèvement" },
+    { "name": "Paypal" },
+    { "name": "Mandat" },
+    { "name": "Avoir" },
+    { "name": "Autre" }
+ 
+  
+]
+ 

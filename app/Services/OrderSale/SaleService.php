@@ -1,0 +1,254 @@
+<?php
+
+namespace App\Services\OrderSale;
+
+use App\Enums\EnumPayementStatue;
+use App\Models\Assurances;
+use App\Models\OrderSale;
+use App\Models\Payemnt;
+use App\Repositories\Sale\SaleRepository;
+use App\Services\Alert\AlertService;
+use App\Services\Customer\CustomerService;
+use App\Services\Payement\PayementService;
+use App\Services\Prescription\PrescriptionService;
+use App\Services\Sale\OrderSaleDetailService;
+use App\Services\Setting\SettingService;
+use App\Services\Stock\StockService;
+use Illuminate\Support\Facades\DB;
+
+class SaleService
+{
+    public function __construct(
+        private CustomerService $customerService,
+        private PrescriptionService $prescriptionService,
+        private OrderSaleDetailService $orderSaleDetailService,
+        private PayementService $payementService,
+        private SettingService $settingService,
+        private SaleRepository $saleRepository,
+        private AlertService $alertService,
+        private StockService $stockService,
+    ) {}
+    public function findById(int $id)
+    {
+        return $this->saleRepository->find($id);
+    }
+
+    public function findwithRelations(int $id, array $relations)
+    {
+        return $this->saleRepository->findWith($id, OrderSale::COL_ID, $relations);
+    }
+
+    public function create(array $attributes): ?OrderSale
+    {
+        DB::beginTransaction();
+        try {
+            $storeId = currentStoreId();
+            $orderNumber = '';
+
+            // Step 1: Create or find customer
+            $customer = $this->customerService->findOrCreate($attributes['customer'] ?? []);
+
+            // Step 2 & 3: Check if invoice or not and get order/invoice number
+            if ($attributes['is_invoice']) {
+                $orderNumber = $this->settingService->getNextSaleInvoiceNumber();
+                // Step 4: Increment the number in settings
+                $this->settingService->incrementSaleInvoiceNumber();
+            } else {
+                $orderNumber = $this->settingService->getNextSaleOrderNumber();
+                // Step 4: Increment the number in settings
+                $this->settingService->incrementSaleOrderNumber();
+            }
+
+            // Step 5: Calculate total command from items and glass types with discount and advance
+            $totalCommand = array_reduce($attributes['items'] ?? [], fn($sum, $item) => $sum + ($item['price'] * $item['qte']), 0);
+            $totalCommand += array_reduce($attributes['glass_types'] ?? [], fn($sum, $item) => $sum + $item['price'], 0);
+
+            // Calculate Rest to Pay
+            $discount = $attributes[OrderSale::COL_DISCOUNT] ?? 0;
+            $advance = $attributes[OrderSale::COL_ADVANCE] ?? 0;
+            $attributes[OrderSale::COL_TOTAL_COMMAND] = $totalCommand;
+            $attributes[OrderSale::COL_REST_A_PAY] = max(0, $totalCommand - $advance - $discount);
+            $attributes[OrderSale::COL_TOTAL_PAYMENT] = $advance;
+            // Step 6: Determine state of order
+            $attributes[OrderSale::COL_STATUS] = match (true) {
+                $attributes[OrderSale::COL_REST_A_PAY] == 0 => EnumPayementStatue::PAID->value,
+                $advance > 0 => EnumPayementStatue::AVANCE->value,
+                default => EnumPayementStatue::UNPAID->value
+            };
+
+            // Step 7: Create order
+            $sale = OrderSale::create([
+                OrderSale::COL_ORDER_NUMBER => $orderNumber,
+                OrderSale::COL_ADVANCE => $attributes[OrderSale::COL_ADVANCE] ?? 0,
+                OrderSale::COL_DISCOUNT => $attributes[OrderSale::COL_DISCOUNT] ?? 0,
+                OrderSale::COL_TOTAL_COMMAND => $attributes[OrderSale::COL_TOTAL_COMMAND],
+                OrderSale::COL_TOTAL_PAYMENT => $attributes[OrderSale::COL_TOTAL_PAYMENT] ?? 0,
+                OrderSale::COL_REST_A_PAY => $attributes[OrderSale::COL_REST_A_PAY],
+                OrderSale::COL_STATUS => $attributes[OrderSale::COL_STATUS],
+                OrderSale::COL_IS_INVOICE => $attributes['is_invoice'] ?? false,
+                OrderSale::COL_STORE_ID => $storeId,
+                OrderSale::COL_USER_ID => auth()->id(),
+                OrderSale::COL_CUSTOMER_ID => $customer?->getId(),
+                OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
+                OrderSale::COL_ASSURANCE_TYPE_ID => $attributes['assurance'][Assurances::COL_ID] ?? null,
+            ]);
+
+            // Step 8: Create prescription (if prescription data exists)
+            if (!empty($attributes['prescription'])) {
+                $this->prescriptionService->create([
+                    'prescription' => array_merge($attributes['prescription'], [
+                        'order_id' => $sale->getId(),
+                        'customer_id' => $customer?->getId(),
+                        'user_id' => auth()->id(),
+                    ])
+                ], $customer);
+            }
+
+            // Step 9 & 10: Merge type glasses and add to order sale items, create detail of order
+            $allItems = array_merge($attributes['items'] ?? [], $attributes['glass_types'] ?? []);
+
+            foreach ($allItems as $item) {
+                // Create order sale detail
+                $this->orderSaleDetailService->create($item, $sale);
+
+                // Step 11 & 12: Create movement and update stock of product for store (only for products)
+                if (!empty($item['product_id'])) {
+                    $this->stockService->processStoreProductMovement([
+                        'product_id' => $item['product_id'],
+                        'store_id' => $storeId,
+                        'quantity' => $item['qte'],
+                        'type' => 'sale',
+                        'direction' => 'out',
+                        'price' => $item['price'],
+                        'unit_cost' => $item['price'],
+                        'referenceable_type' => OrderSale::class,
+                        'referenceable_id' => $sale->getId(),
+                        'user_id' => auth()->id(),
+                        'note' => "Sale order: {$orderNumber}",
+                    ]);
+                }
+            }
+
+            // Step 13: Create payment record if advance was paid
+            if ($advance > 0) {
+                $this->payementService->create($advance, $sale);
+            }
+
+            // Step 14: Update client state (customer totals)
+            $this->customerService->updateTotals($customer);
+
+            // Step 15: Check and resolve customer inactivity alerts (customer just made a purchase)
+            if ($customer) {
+                $this->resolveCustomerInactivityAlerts($customer);
+            }
+
+            // Step 16: Check for product stock alerts after stock movements
+            $this->checkProductStockAlertsAfterSale($storeId, $allItems);
+
+            DB::commit();
+            return $sale->load(['orderItems', 'payments', 'prescription', 'customer']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function update(int $id, array $attributes): bool
+    {
+        $order = $this->saleRepository->find($id);
+        if (!$order) {
+            return false;
+        }
+
+        $order = $order->update($attributes);
+        return $order;
+    }
+
+    public function updateToInvoice(int $id): bool
+    {
+
+        $invoiceNumber = $this->settingService->getNextSaleInvoiceNumber();
+        // Increment the number in settings
+        $order =  $this->update($id, [
+            OrderSale::COL_IS_INVOICE => true,
+            OrderSale::COL_ORDER_NUMBER => $invoiceNumber,
+        ]);
+
+        $this->settingService->incrementSaleInvoiceNumber();
+
+        return $order;
+    }
+
+    public function addPaymentToOrder(int $orderId, float $amount): Payemnt
+    {
+        $order = $this->findById($orderId);
+
+        $payement = $this->payementService->create($amount, $order);
+
+        // Recalculate order totals
+        $totalPayments = $order->payments()->sum('amount');
+        $discount = $order->getAttribute(OrderSale::COL_DISCOUNT) ?? 0;
+        $restToPay = max(0, $order->getAttribute(OrderSale::COL_TOTAL_COMMAND) - $totalPayments - $discount);
+
+        // Update order status
+        $status = match (true) {
+            $restToPay == 0 => EnumPayementStatue::PAID->value,
+            $totalPayments > 0 => EnumPayementStatue::AVANCE->value,
+            default => EnumPayementStatue::UNPAID->value
+        };
+
+        $this->update($orderId, [
+            OrderSale::COL_TOTAL_PAYMENT => $totalPayments,
+            OrderSale::COL_REST_A_PAY => $restToPay,
+            OrderSale::COL_STATUS => $status,
+        ]);
+
+        return $payement;
+    }
+
+    /**
+     * Resolve customer inactivity alerts when customer makes a purchase
+     */
+    private function resolveCustomerInactivityAlerts($customer): void
+    {
+        if (!$customer) return;
+
+        // Find any unresolved customer inactivity alerts for this customer
+        $inactiveAlerts = \App\Models\Alert::where('customer_id', $customer->id)
+            ->whereIn('type', [
+                \App\Models\Alert::TYPE_CUSTOMER_INACTIVE_CHILD,
+                \App\Models\Alert::TYPE_CUSTOMER_INACTIVE_MINOR,
+                \App\Models\Alert::TYPE_CUSTOMER_INACTIVE_ADULT
+            ])
+            ->unresolved()
+            ->get();
+
+        foreach ($inactiveAlerts as $alert) {
+            // Mark the alert as resolved since customer just made a purchase
+            $alert->markAsResolved(auth()->user());
+        }
+    }
+
+    /**
+     * Check for product stock alerts after sale stock movements
+     */
+    private function checkProductStockAlertsAfterSale(int $storeId, array $saleItems): void
+    {
+        $productIds = [];
+
+        // Collect all product IDs that were sold
+        foreach ($saleItems as $item) {
+            if (!empty($item['product_id'])) {
+                $productIds[] = $item['product_id'];
+            }
+        }
+
+        if (empty($productIds)) return;
+
+        // Remove duplicates
+        $productIds = array_unique($productIds);
+
+        // Check stock alerts only for these specific products
+        $this->alertService->generateProductStockAlertsForProducts($productIds, $storeId);
+    }
+}

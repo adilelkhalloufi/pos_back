@@ -1,0 +1,15 @@
+{
+    "user_errors_email_already_in_use": "L'adresse e-mail de cet utilisateur est déjà utilisée.",
+    "product_errors_name": "Le nom du produit est requis.",
+    "product_errors_price": "Le prix du produit est requis et doit être un nombre.",
+    "product_errors_brand_not_exist": "La marque sélectionnée n'existe pas.",
+    "product_errors_category_not_exist": "La catégorie sélectionnée n'existe pas.",
+    "product_errors_quantity_min": "La quantité doit être au moins de 0.",
+    "product_errors_failed_to_create": "Échec de la création du produit",
+    "product_errors_not_found": "Produit non trouvé.",
+    "product_errors_failed_to_update": "Échec de la mise à jour du produit.",
+    "product_successfully_updated": "Produit mis à jour avec succès."
+
+   
+}
+ 
