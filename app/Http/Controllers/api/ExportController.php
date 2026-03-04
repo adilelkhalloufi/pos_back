@@ -5,8 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\BaseController;
 use App\Models\Ajustement;
 use App\Models\Alert;
-use App\Models\Brands;
-use App\Models\Category;
+ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Inventary;
 use App\Models\Invoice;
@@ -43,7 +42,7 @@ class ExportController extends BaseController
         // Get request parameters
         $dataTypes = $request->input('data_types', [
             'store', 'products', 'customers', 'sales', 'purchases',
-            'inventory', 'users', 'categories', 'brands', 'suppliers',
+            'inventory', 'users', 'categories',   'suppliers',
             'alerts', 'transfers', 'adjustments', 'invoices',
         ]);
 
@@ -95,9 +94,7 @@ class ExportController extends BaseController
             $data['categories'] = $this->getCategoriesData($storeId);
         }
 
-        if (in_array('brands', $dataTypes)) {
-            $data['brands'] = $this->getBrandsData($storeId);
-        }
+      
 
         if (in_array('suppliers', $dataTypes)) {
             $data['suppliers'] = $this->getSuppliersData($storeId);
@@ -156,7 +153,7 @@ class ExportController extends BaseController
 
         if (in_array('products', $dataTypes)) {
             $this->addCsvToZip($zip, 'products.csv', $this->getProductsData($storeId),
-                ['id', 'name', 'reference', 'codebar', 'price', 'stock_min', 'stock_max', 'category_id', 'brand_id', 'store_id', 'created_at']);
+                ['id', 'name', 'reference', 'codebar', 'price', 'stock_min', 'stock_max', 'category_id', 'store_id', 'created_at']);
         }
 
         if (in_array('customers', $dataTypes)) {
@@ -189,10 +186,7 @@ class ExportController extends BaseController
                 ['id', 'name', 'description', 'store_id', 'created_at']);
         }
 
-        if (in_array('brands', $dataTypes)) {
-            $this->addCsvToZip($zip, 'brands.csv', $this->getBrandsData($storeId),
-                ['id', 'name', 'description', 'store_id', 'created_at']);
-        }
+      
 
         if (in_array('suppliers', $dataTypes)) {
             $this->addCsvToZip($zip, 'suppliers.csv', $this->getSuppliersData($storeId),
@@ -276,7 +270,7 @@ class ExportController extends BaseController
     private function getProductsData($storeId)
     {
         return Product::where('store_id', $storeId)
-            ->with(['category', 'brand'])
+            ->with(['category'])
             ->get();
     }
 
@@ -347,10 +341,7 @@ class ExportController extends BaseController
         return Category::where('store_id', $storeId)->get();
     }
 
-    private function getBrandsData($storeId)
-    {
-        return Brands::where('store_id', $storeId)->get();
-    }
+   
 
     private function getSuppliersData($storeId)
     {

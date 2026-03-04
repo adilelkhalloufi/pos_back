@@ -170,10 +170,7 @@ class User extends BaseModel implements AuthenticatableContract, FilamentUser
         return $this->hasMany(Product::class);
     }
 
-    public function suggestions()
-    {
-        return $this->hasMany(Suggestion::class);
-    }
+ 
 
     /**
      * Roles assigned to this user

@@ -6,12 +6,12 @@ use App\Enums\EnumPayementStatue;
 use App\Models\Assurances;
 use App\Models\OrderSale;
 use App\Models\Payemnt;
+use App\Enums\EnumOrderStatue;
 use App\Repositories\Sale\SaleRepository;
 use App\Services\Alert\AlertService;
 use App\Services\Customer\CustomerService;
 use App\Services\Payement\PayementService;
-use App\Services\Prescription\PrescriptionService;
-use App\Services\Sale\OrderSaleDetailService;
+ use App\Services\Sale\OrderSaleDetailService;
 use App\Services\Setting\SettingService;
 use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +20,7 @@ class SaleService
 {
     public function __construct(
         private CustomerService $customerService,
-        private PrescriptionService $prescriptionService,
-        private OrderSaleDetailService $orderSaleDetailService,
+         private OrderSaleDetailService $orderSaleDetailService,
         private PayementService $payementService,
         private SettingService $settingService,
         private SaleRepository $saleRepository,
@@ -90,19 +89,9 @@ class SaleService
                 OrderSale::COL_USER_ID => auth()->id(),
                 OrderSale::COL_CUSTOMER_ID => $customer?->getId(),
                 OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
-                OrderSale::COL_ASSURANCE_TYPE_ID => $attributes['assurance'][Assurances::COL_ID] ?? null,
-            ]);
+             ]);
 
-            // Step 8: Create prescription (if prescription data exists)
-            if (!empty($attributes['prescription'])) {
-                $this->prescriptionService->create([
-                    'prescription' => array_merge($attributes['prescription'], [
-                        'order_id' => $sale->getId(),
-                        'customer_id' => $customer?->getId(),
-                        'user_id' => auth()->id(),
-                    ])
-                ], $customer);
-            }
+          
 
             // Step 9 & 10: Merge type glasses and add to order sale items, create detail of order
             $allItems = array_merge($attributes['items'] ?? [], $attributes['glass_types'] ?? []);
@@ -177,6 +166,58 @@ class SaleService
         $this->settingService->incrementSaleInvoiceNumber();
 
         return $order;
+    }
+
+    /**
+     * Cancel a sale order, reverse stock, and mark payments as voided.
+     */
+    public function cancel(int $orderId, ?string $reason = null): OrderSale
+    {
+        $order = $this->saleRepository->find($orderId);
+
+        if (!$order instanceof OrderSale) {
+            throw new \RuntimeException('Order not found.');
+        }
+
+        if ($order->getAttribute(OrderSale::COL_CANCELLED_AT) !== null) {
+            throw new \RuntimeException('Order is already cancelled.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Reverse stock for all stockable product items
+            foreach ($order->orderItems as $item) {
+                if (!empty($item->product_id) && optional($item->product)->is_stockable) {
+                    $this->stockService->processStoreProductMovement([
+                        'product_id'          => $item->product_id,
+                        'store_id'            => $order->getAttribute(OrderSale::COL_STORE_ID),
+                        'quantity'            => $item->qte,
+                        'type'                => 'cancellation',
+                        'direction'           => 'in',
+                        'price'               => $item->price,
+                        'unit_cost'           => $item->price,
+                        'referenceable_type'  => OrderSale::class,
+                        'referenceable_id'    => $order->getId(),
+                        'user_id'             => auth()->id(),
+                        'note'                => "Cancellation of order: {$order->order_number}",
+                    ]);
+                }
+            }
+
+            // Mark records
+            $order->update([
+                OrderSale::COL_CANCELLED_AT => now(),
+                OrderSale::COL_CANCELLED_BY => auth()->id(),
+                OrderSale::COL_CANCEL_REASON => $reason,
+                OrderSale::COL_STATUS        => EnumOrderStatue::CANCELLED->value,
+            ]);
+
+            DB::commit();
+            return $order->fresh();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function addPaymentToOrder(int $orderId, float $amount): Payemnt

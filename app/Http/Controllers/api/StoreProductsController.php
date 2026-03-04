@@ -26,7 +26,7 @@ class StoreProductsController extends BaseController
     {
         $storeId = $this->storeId();
 
-        $relations = ['product.category', 'product.brand'];
+        $relations = ['product.category'];
         $products = $this->storeProductService->getStoreProducts($storeId, $relations);
 
         return response()->json(StoreProductResource::collection($products), Response::HTTP_OK);
@@ -97,7 +97,7 @@ class StoreProductsController extends BaseController
         try {
             $storeProduct = StoreProducts::with([
                 'product.category',
-                'product.brand',
+                'product.unit',
                  'store'
             ])->find($id);
 

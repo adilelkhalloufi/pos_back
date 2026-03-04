@@ -38,9 +38,7 @@ return new class() extends Migration
                 ->nullable()
                 ->constrained('mode_payemnts');
 
-            $table->foreignId('assurance_type_id')
-                ->nullable()
-                ->constrained('assurances');
+    
 
             $table->foreignId('user_id')
                 ->nullable()

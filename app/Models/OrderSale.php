@@ -43,7 +43,10 @@ class OrderSale extends BaseModel
 
     public const COL_DELETED_AT = 'deleted_at';
 
- 
+    public const COL_CANCELLED_AT = 'cancelled_at';
+    public const COL_CANCELLED_BY = 'cancelled_by';
+    public const COL_CANCEL_REASON = 'cancel_reason';
+
     
 
     public function orderItems()
@@ -74,5 +77,10 @@ class OrderSale extends BaseModel
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, self::COL_CANCELLED_BY);
     }
 }

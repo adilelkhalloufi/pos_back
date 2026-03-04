@@ -45,15 +45,13 @@ class StoreProductResource extends JsonResource
             Product::COL_CREATED_AT => $this->created_at,
             Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->product->id, // this for order items
-            Product::COL_BRAND_ID => $this->product->brand_id,
-            Product::COL_CATEGORY_ID => $this->product->category_id,
+             Product::COL_CATEGORY_ID => $this->product->category_id,
             AUTOCOMPLETE::VALUE->value => $this->product->id,
             
         
             'qte' => 1, // this for front end to calcluat the product selected
             'category' => CategoryResource::make($this->product->category),
-            'brand' => BrandResource::make($this->product->brand),
-            'sales' => $this->whenLoaded('product.sales') ?? [],
+             'sales' => $this->whenLoaded('product.sales') ?? [],
             'purchases' => $this->whenLoaded('product.purchases') ?? [],
             'store' => $this->whenLoaded('product.store') ?? null,
 

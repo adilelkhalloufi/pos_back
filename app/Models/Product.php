@@ -12,18 +12,24 @@ class Product extends BaseModel
     protected $fillable = [
         'name',
         'reference',
+        'supplier_code',
         'codebar',
         'slug',
         'description',
         'image',
         'price',
+        'price_buy',
+        'price_sell_1',
+        'price_sell_2',
         'stock_min',
         'stock_max',
         'is_active',
+        'is_stockable',
         'archive',
         'quantity',
-        'brand_id',
-        'category_id',
+         'category_id',
+        'unit_id',
+        'print_profile_id',
         'user_id',
         'store_id',
     ];
@@ -52,8 +58,7 @@ class Product extends BaseModel
 
     public const COL_IS_ACTIVE = 'is_active';
 
-    public const COL_BRAND_ID = 'brand_id';
-
+ 
     public const COL_CATEGORY_ID = 'category_id';
 
     public const COL_USER_ID = 'user_id';
@@ -62,20 +67,34 @@ class Product extends BaseModel
 
     public const COL_ARCHIVE = 'archive';
 
+    public const COL_SUPPLIER_CODE = 'supplier_code';
+
+    public const COL_PRICE_BUY = 'price_buy';
+
+    public const COL_PRICE_SELL_1 = 'price_sell_1';
+
+    public const COL_PRICE_SELL_2 = 'price_sell_2';
+
+    public const COL_IS_STOCKABLE = 'is_stockable';
+
+    public const COL_UNIT_ID = 'unit_id';
+
+    public const COL_PRINT_PROFILE_ID = 'print_profile_id';
+
     // casts
     protected $casts = [
         self::COL_PRICE => 'float',
+        self::COL_PRICE_BUY => 'float',
+        self::COL_PRICE_SELL_1 => 'float',
+        self::COL_PRICE_SELL_2 => 'float',
         self::COL_IS_ACTIVE => 'boolean',
+        self::COL_IS_STOCKABLE => 'boolean',
         self::COL_ARCHIVE => 'boolean',
         self::COL_STOCK_MAX => 'integer',
         self::COL_STOCK_MIN => 'integer',
     ];
 
-    // belong to brand
-    public function brand()
-    {
-        return $this->belongsTo(Brands::class);
-    }
+   
 
     // belong to category
     public function category()
@@ -109,5 +128,30 @@ class Product extends BaseModel
     public function orderItems()
     {
         return $this->morphMany(OrderItems::class, 'product');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function printProfile()
+    {
+        return $this->belongsTo(PrintProfile::class, 'print_profile_id');
+    }
+
+    public function components()
+    {
+        return $this->hasMany(ProductComponent::class, 'product_id');
+    }
+
+    public function usedIn()
+    {
+        return $this->hasMany(ProductComponent::class, 'component_id');
+    }
+
+    public function priceChangeLogs()
+    {
+        return $this->hasMany(PriceChangeLog::class);
     }
 }

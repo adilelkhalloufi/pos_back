@@ -38,15 +38,13 @@ class POSResource extends JsonResource
             Product::COL_IMAGE => $this->image ? asset('storage/' . $this->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->id, // this for order items
-            Product::COL_BRAND_ID => $this->brand_id,
-            Product::COL_CATEGORY_ID => $this->category_id,
+             Product::COL_CATEGORY_ID => $this->category_id,
             AUTOCOMPLETE::VALUE->value => $this->id,
             'qte' => 1, // this for front end to calcluat the product selected
             'quantity' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_STOCK} : 0,
             'cost' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_COST} : 0,
             'category' => CategoryResource::make($this->whenLoaded('category')),
-            'brand' => BrandResource::make($this->whenLoaded('brand')),
-            'sales' => $this->whenLoaded('sales') ?? [],
+             'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],
 
         ];

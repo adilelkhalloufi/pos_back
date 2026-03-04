@@ -2,12 +2,11 @@
 
 use App\Http\Controllers\api\AjustementController;
 use App\Http\Controllers\api\AlertController;
-use App\Http\Controllers\api\AssurancesController;
-use App\Http\Controllers\api\BrandsController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\CustomerController;
 use App\Http\Controllers\api\DashbordController;
 use App\Http\Controllers\api\ExportController;
+use App\Http\Controllers\api\ImportController;
 use App\Http\Controllers\api\InventaryController;
 use App\Http\Controllers\api\ModePayemntController;
 use App\Http\Controllers\api\OrderPurchaseController;
@@ -15,13 +14,17 @@ use App\Http\Controllers\api\OrderSaleController;
 use App\Http\Controllers\api\OwnersController;
 use App\Http\Controllers\api\PayemntController;
 use App\Http\Controllers\api\PlanController;
+use App\Http\Controllers\api\PriceChangeController;
+use App\Http\Controllers\api\PrintProfileController;
+use App\Http\Controllers\api\ProductComponentController;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\ReportController;
+use App\Http\Controllers\api\SettingController;
 use App\Http\Controllers\api\StoreController;
 use App\Http\Controllers\api\StoreProductsController;
-use App\Http\Controllers\api\SuggestionController;
 use App\Http\Controllers\api\SuppliersController;
 use App\Http\Controllers\api\TransfertController;
-use App\Http\Controllers\api\TypeGlassesController;
+use App\Http\Controllers\api\UnitController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Middleware\EnsureTrialIsValid;
 use Illuminate\Support\Facades\Route;
@@ -63,14 +66,53 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     Route::post('/addPaymentToOrder/{id}', [OrderSaleController::class, 'addPaymentToOrder']);
     Route::post('/updateToInvoice/{id}', [OrderSaleController::class, 'updateToInvoice']);
+    Route::put('/orders/{id}/cancel', [OrderSaleController::class, 'cancel']);
     Route::get('/caisse', [PayemntController::class, 'caisse']);
 
     Route::resource('/paid_methods', ModePayemntController::class);
     Route::apiResource('/stores', StoreController::class, ['index', 'update']);
 
-    Route::resource('/suggestion', SuggestionController::class);
-    Route::patch('/updateStatus/{id}', [SuggestionController::class, 'updateStatus']);
+    // Units
+    Route::apiResource('/units', UnitController::class);
 
+    // Print Profiles
+    Route::apiResource('/print-profiles', PrintProfileController::class);
+
+    // Product Components (BOM / Composants)
+    Route::prefix('products/{product}/components')->group(function () {
+        Route::get('/', [ProductComponentController::class, 'index']);
+        Route::post('/', [ProductComponentController::class, 'store']);
+        Route::put('/{component}', [ProductComponentController::class, 'update']);
+        Route::delete('/{component}', [ProductComponentController::class, 'destroy']);
+    });
+
+    // Price Changes
+    Route::post('/price-changes', [PriceChangeController::class, 'store']);
+    Route::get('/price-changes/{product}', [PriceChangeController::class, 'history']);
+
+    // Settings
+    Route::get('/settings', [SettingController::class, 'show']);
+    Route::put('/settings', [SettingController::class, 'update']);
+
+    // Reports
+    Route::prefix('reports')->group(function () {
+        Route::get('/sales-by-item-family',         [ReportController::class, 'salesByItemFamily']);
+        Route::get('/sales-by-annexe',              [ReportController::class, 'salesByAnnexe']);
+        Route::get('/sales-by-item-family-cashier', [ReportController::class, 'salesByItemFamilyCashier']);
+        Route::get('/end-of-day',                   [ReportController::class, 'endOfDay']);
+        Route::get('/sales-journal-margin',         [ReportController::class, 'salesJournalMargin']);
+        Route::get('/commands-print-list',          [ReportController::class, 'commandsPrintList']);
+    });
+
+    // Product Import (upload CSV/XLSX from supplier)
+    Route::prefix('imports')->group(function () {
+        Route::get('/',              [ImportController::class, 'index']);
+        Route::post('/upload',       [ImportController::class, 'upload']);
+        Route::get('/{id}',          [ImportController::class, 'show']);
+        Route::put('/{id}/commit',   [ImportController::class, 'commit']);
+    });
+
+ 
     // Store Products Routes
     Route::prefix('store-products')->group(function () {
         Route::get('/', [StoreProductsController::class, 'index']);

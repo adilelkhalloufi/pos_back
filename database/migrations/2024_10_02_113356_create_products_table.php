@@ -11,6 +11,7 @@ return new class() extends Migration
      */
     public function up(): void
     {
+    
 
         Schema::create('products', function (Blueprint $table) {
             $table->id();
@@ -26,9 +27,7 @@ return new class() extends Migration
             $table->decimal('stock_min')->nullable();
             $table->decimal('stock_max')->nullable();
             $table->boolean('is_active')->default(false);
-            $table->foreignId('brand_id')
-                ->nullable()
-                ->constrained('brands');
+           
 
             $table->foreignId('category_id')
                 ->nullable()

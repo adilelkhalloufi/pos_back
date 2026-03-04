@@ -87,14 +87,7 @@ class Store extends BaseModel
         return $this->hasMany(Suppliers::class, 'store_id');
     }
 
-    public function typeglass()
-    {
-        return $this->hasMany(TypeGlasses::class, 'store_id');
-    }
-    public function brands()
-    {
-        return $this->hasMany(Brands::class, 'store_id');
-    }
+  
 
     public function payments()
     {

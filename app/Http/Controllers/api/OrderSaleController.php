@@ -129,4 +129,26 @@ class OrderSaleController extends BaseController
             'order' => $order
         ], Response::HTTP_OK);
     }
+
+    public function cancel(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $order = $this->saleService->cancel((int) $id, $request->input('reason'));
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_CONFLICT);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error cancelling order: ' . $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return response()->json([
+            'message' => 'Order cancelled successfully.',
+            'order'   => new OrderResource($order),
+        ], Response::HTTP_OK);
+    }
 }

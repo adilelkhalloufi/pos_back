@@ -56,7 +56,7 @@ class StoreProductRepository extends BaseRepository
     public function getInStockProducts(int $storeId, ?string $search = null)
     {
         $query = $this->getQueryBuilder()
-            ->with(['product.category', 'product.brand', 'store'])
+            ->with(['product.category', 'product.unit', 'store'])
             ->where(StoreProducts::COL_STORE_ID, $storeId)
             ->where(StoreProducts::COL_STOCK, '>', 0);
 

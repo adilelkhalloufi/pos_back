@@ -54,4 +54,28 @@ class SettingService
         $nextNumber = $settings->getAttribute(Settings::COL_ORDER_PURCHASE_NUMBER) + 1;
         $settings->update([Settings::COL_ORDER_PURCHASE_NUMBER => $nextNumber]);
     }
-}
+
+    public function getSettings(): ?Settings
+    {
+        return $this->getSettingsByStoreId(currentStoreId());
+    }
+
+    public function updateSettings(array $attributes): Settings
+    {
+        $settings = $this->getSettingsByStoreId(currentStoreId());
+
+        $allowed = [
+            'company_name', 'currency', 'document_header', 'document_footer',
+            'order_prefix', 'invoice_prefix', 'purchase_prefix',
+            'max_print_copies',
+            'secondary_display_enabled', 'secondary_display_connection',
+            'secondary_display_com_port', 'secondary_display_x', 'secondary_display_y',
+            'secondary_display_width', 'secondary_display_height',
+            'passport_reader_enabled', 'passport_reader_com_port',
+            'passport_reader_baud_rate', 'passport_reader_provider',
+        ];
+
+        $settings->update(array_intersect_key($attributes, array_flip($allowed)));
+
+        return $settings->fresh();
+    }}

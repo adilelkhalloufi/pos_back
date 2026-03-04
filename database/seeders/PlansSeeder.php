@@ -17,7 +17,7 @@ class PlansSeeder extends Seeder
             [
                 'name' => 'Free Trial',
                 'price' => 0.00,
-                'max_users' => 1,
+                'max_users' => 10,
                 'max_stores' => 1,
                 'description' => 'Free trial plan with basic features for 30 days',
                 'features' => [
