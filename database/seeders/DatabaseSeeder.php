@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(RoleSeeder::class);
         
-        $owner = User::factory()->create([
+        $owner = User::create([
             'name' => 'adil',
             'email' => 'test@test.com',
             'password' => Hash::make('password'),
@@ -34,26 +34,26 @@ class DatabaseSeeder extends Seeder
             'plan_id' => 2,
         ]);
       
-        $store1 = Store::factory()->create([
+        $store1 = Store::create([
             'name' => 'DutyFree',
             'address' => 'address 1',
             'phone' => '123456789',
             'owner_id' => $owner->id,
         ]);
       
-        $vender1 = User::factory()->create([
+        $vender1 = User::create([
             'name' => 'vender1',
             'email' => 'vender1@vender1.com',
             'password' => Hash::make('password'),
             'role' => ROLES::VENDOR,
         ]);
      
-        $userStore1 = UserStore::factory()->create([
+        $userStore1 = UserStore::create([
             'user_id' => $vender1->id,
             'store_id' => $store1->id,
         ]);
        
-        $settings1 = Settings::factory()->create([
+        $settings1 = Settings::create([
             Settings::COL_ORDER_SALE_NUMBER => 1,
             Settings::COL_ORDER_PURCHASE_NUMBER => 1,
             Settings::COL_INVOICE_NUMBER => 1,
@@ -61,7 +61,7 @@ class DatabaseSeeder extends Seeder
         ]);
     
         $this->call(ModePayemntSeeder::class);
-        $this->call(SupplierSeeder::class);
+        // $this->call(SupplierSeeder::class);
         $this->call(CategorySeeds::class);
        
     }

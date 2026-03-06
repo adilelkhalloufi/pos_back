@@ -22,13 +22,6 @@ class ModePayemntSeeder extends Seeder
             ]);
         }
 
-        $json = file_get_contents(database_path('import/reglement_terms.json'));
-        $data = json_decode($json, true);
-
-        foreach ($data as $mode) {
-            $regionModel = PayementTermes::create([
-                'name' => $mode['name'],
-            ]);
-        }
+    
     }
 }

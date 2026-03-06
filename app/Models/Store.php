@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Store extends BaseModel
 {
-    use HasFactory;
-
+ 
     public const TABLE_NAME = 'stores';
 
 
