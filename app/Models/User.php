@@ -182,20 +182,7 @@ class User extends BaseModel implements AuthenticatableContract, FilamentUser
             ->withTimestamps();
     }
 
-    /**
-     * Assign a role to the user
-     *
-     * @param  int|Role  $role  Role ID or Role model
-     * @param  int|null  $storeId  Store ID for store-specific role
-     */
-    public function assignRole($role, ?int $storeId = null): void
-    {
-        $roleId = $role instanceof Role ? $role->id : $role;
-
-        $this->roles()->syncWithoutDetaching([
-            $roleId => ['store_id' => $storeId],
-        ]);
-    }
+ 
 
     /**
      * Remove a role from the user
