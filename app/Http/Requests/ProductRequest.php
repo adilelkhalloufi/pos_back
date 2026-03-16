@@ -15,6 +15,29 @@ class ProductRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Handle barcodes if sent as JSON string
+        if ($this->has('barcodes') && is_string($this->barcodes)) {
+            $decoded = json_decode($this->barcodes, true);
+            
+            if (is_array($decoded)) {
+                // Handle array of objects like [{"barcode":"123"},{"barcode":"456"}]
+                $barcodes = array_map(function($item) {
+                    if (is_array($item) && isset($item['barcode'])) {
+                        return $item['barcode'];
+                    }
+                    return $item;
+                }, $decoded);
+                
+                $this->merge(['barcodes' => array_filter($barcodes)]);
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

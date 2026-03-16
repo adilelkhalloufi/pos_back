@@ -38,6 +38,7 @@ class ProductController extends BaseController
         }
 
         $product = Product::where(Product::COL_STORE_ID, $storeId)
+            ->with('barcodes')
             ->orderBy('id', 'desc')
             ->get();
 
@@ -55,6 +56,9 @@ class ProductController extends BaseController
         try {
 
             $product =  $this->productService->create($validated);
+            
+            // Load barcodes relationship
+            $product->load('barcodes');
 
         } catch (\Exception $e) {
 
@@ -73,6 +77,7 @@ class ProductController extends BaseController
 
          try {
             $product =  $this->productService->findwithRelations($id);
+            $product->load('barcodes');
             $stores = StoreProducts::where(StoreProducts::COL_PRODUCT_ID, $id)->with('store')->get();
         
         } catch (ProductNotFoundException $e) {
@@ -101,6 +106,9 @@ class ProductController extends BaseController
         try {
             
             $product =  $this->productService->update($id, $validated);
+            
+            // Load barcodes to return in response
+            $product?->load('barcodes');
 
         }catch (ProductNotFoundException $e) {
 
@@ -117,6 +125,7 @@ class ProductController extends BaseController
 
         return response()->json([
             'message' => __('product_successfully_updated'),
+            'product' => $product ? new ProductResource($product) : null,
          ], 200);
 
 

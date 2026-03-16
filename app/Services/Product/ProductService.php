@@ -56,8 +56,7 @@ class ProductService
             Product::COL_PRICE_BUY        => $attributes['price_buy'] ?? null,
             Product::COL_PRICE_SELL_1     => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? null,
              Product::COL_SUPPLIER_CODE    => $attributes['supplier_code'] ?? null,
-            Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? null,
-            Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? null,
+             Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? null,
             Product::COL_ARCHIVE          => $attributes[Product::COL_ARCHIVE] ?? false,
             Product::COL_CATEGORY_ID      => $attributes[Product::COL_CATEGORY_ID] ?? null,
              Product::COL_STOCK_ALERT        => $attributes[Product::COL_STOCK_ALERT] ?? null,
@@ -91,23 +90,52 @@ class ProductService
             }
         }
 
-        // Handle barcodes
-        if (!empty($attributes['barcodes']) && is_array($attributes['barcodes'])) {
-            foreach ($attributes['barcodes'] as $index => $barcode) {
-                if (!empty($barcode)) {
-                    ProductBarcode::create([
-                        'product_id' => $product->id,
-                        'barcode' => $barcode,
-                        'is_primary' => $index === 0, // First barcode is primary
-                    ]);
+        // Handle barcodes - collect from both codebar and barcodes array
+        $barcodesToSave = [];
+        
+        // If barcodes array is provided
+        if (isset($attributes['barcodes'])) {
+            // Handle if it's sent as JSON string from frontend
+            if (is_string($attributes['barcodes'])) {
+                $attributes['barcodes'] = json_decode($attributes['barcodes'], true) ?? [];
+            }
+            
+            if (is_array($attributes['barcodes'])) {
+                foreach ($attributes['barcodes'] as $barcode) {
+                    // Handle object format {"barcode": "123"}
+                    if (is_array($barcode) && isset($barcode['barcode'])) {
+                        $barcode = $barcode['barcode'];
+                    }
+                    
+                    if (!empty($barcode) && is_string($barcode)) {
+                        $barcodesToSave[] = trim($barcode);
+                    }
                 }
             }
+        }
+        
+        // If single codebar is provided and not already in array, add it as primary
+        if (!empty($attributes[Product::COL_CODEBAR])) {
+            $codebar = trim($attributes[Product::COL_CODEBAR]);
+            if (!in_array($codebar, $barcodesToSave)) {
+                array_unshift($barcodesToSave, $codebar); // Add as first (primary)
+            }
+        }
+        
+        // Remove duplicates and save barcodes
+        $barcodesToSave = array_values(array_unique($barcodesToSave));
+        foreach ($barcodesToSave as $index => $barcode) {
+            ProductBarcode::create([
+                'product_id' => $product->id,
+                'barcode' => $barcode,
+                'is_primary' => $index === 0, // First barcode is primary
+            ]);
         }
 
         return $product;
     }
 
-    public function update(int $id, array $attributes): ?bool
+    public function update(int $id, array $attributes): ?Product
     {
         if (isset($attributes[Product::COL_IMAGE])) {
             $imagePath = $attributes[Product::COL_IMAGE]->store('products', 'public');
@@ -154,14 +182,49 @@ class ProductService
             }
         }
 
-        // Handle barcodes update if provided
-        if (isset($attributes['barcodes']) && is_array($attributes['barcodes'])) {
-            // Delete existing barcodes
-            ProductBarcode::where('product_id', $id)->delete();
+        // Handle barcodes update - collect from both codebar and barcodes array
+        if (isset($attributes['barcodes']) || isset($attributes[Product::COL_CODEBAR])) {
+            $barcodesToSave = [];
             
-            // Add new barcodes
-            foreach ($attributes['barcodes'] as $index => $barcode) {
-                if (!empty($barcode)) {
+            // If barcodes array is provided
+            if (isset($attributes['barcodes'])) {
+                // Handle if it's sent as JSON string from frontend
+                if (is_string($attributes['barcodes'])) {
+                    $attributes['barcodes'] = json_decode($attributes['barcodes'], true) ?? [];
+                }
+                
+                if (is_array($attributes['barcodes'])) {
+                    foreach ($attributes['barcodes'] as $barcode) {
+                        // Handle object format {"barcode": "123"}
+                        if (is_array($barcode) && isset($barcode['barcode'])) {
+                            $barcode = $barcode['barcode'];
+                        }
+                        
+                        if (!empty($barcode) && is_string($barcode)) {
+                            $barcodesToSave[] = trim($barcode);
+                        }
+                    }
+                }
+            }
+            
+            // If single codebar is provided and not already in array, add it as primary
+            if (isset($attributes[Product::COL_CODEBAR]) && !empty($attributes[Product::COL_CODEBAR])) {
+                $codebar = trim($attributes[Product::COL_CODEBAR]);
+                if (!in_array($codebar, $barcodesToSave)) {
+                    array_unshift($barcodesToSave, $codebar); // Add as first (primary)
+                }
+            }
+            
+            // Remove duplicates
+            $barcodesToSave = array_values(array_unique($barcodesToSave));
+            
+            // Only update if we have barcodes to save
+            if (!empty($barcodesToSave)) {
+                // Delete existing barcodes
+                ProductBarcode::where('product_id', $id)->delete();
+                
+                // Add new barcodes
+                foreach ($barcodesToSave as $index => $barcode) {
                     ProductBarcode::create([
                         'product_id' => $id,
                         'barcode' => $barcode,
