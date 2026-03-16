@@ -129,8 +129,9 @@ class ProductController extends BaseController
      */
     public function pos(Request $request)
     {
-     
- 
+        $storeId = $this->storeId();
+        $search = $request->query('search');
+
         try {
             $products = $this->productService->getProductsForPOS($storeId, $search);
 

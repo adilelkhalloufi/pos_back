@@ -18,7 +18,7 @@ Translate client analysis into a clear delivery scope: what already exists, what
 
 ### 3.1 Core modules available
 
-- Products CRUD (`/products`) with current fields: `name`, `reference`, `codebar`, `price`, `stock_min`, `stock_max`, `category_id`, active/archive.
+- Products CRUD (`/products`) with current fields: `name`, `reference`, `codebar`, `price`,  `category_id`, active/archive.
 - Sales orders CRUD (`/orders`) with payments (`/addPaymentToOrder/{id}`), invoice conversion (`/updateToInvoice/{id}`), and date filtering support.
 - Purchase orders with approve/cancel.
 - Inventory stack already present: transfers, adjustments, inventories (`/store/*`).
@@ -44,8 +44,7 @@ Client asks product creation with:
 - `pa` (purchase price / cost)
 - `pv2` (sale price 2)
 - `stockable` (yes/no)
-- `stock_min`, `stock_max`
-- `impression` (print routing flag/profile)
+ - `impression` (print routing flag/profile)
 - `components list` (composants/BOM)
 - `unit` (unité)
 - `category`

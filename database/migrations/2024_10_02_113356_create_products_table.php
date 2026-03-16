@@ -24,9 +24,8 @@ return new class() extends Migration
             $table->string('image')->nullable();
             $table->decimal('price')->nullable();
 
-            $table->decimal('stock_min')->nullable();
-            $table->decimal('stock_max')->nullable();
-            $table->boolean('is_active')->default(false);
+            $table->decimal('stock_alert')->nullable();
+             $table->boolean('is_active')->default(false);
            
 
             $table->foreignId('category_id')

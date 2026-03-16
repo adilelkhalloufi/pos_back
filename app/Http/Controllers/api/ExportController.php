@@ -153,7 +153,7 @@ class ExportController extends BaseController
 
         if (in_array('products', $dataTypes)) {
             $this->addCsvToZip($zip, 'products.csv', $this->getProductsData($storeId),
-                ['id', 'name', 'reference', 'codebar', 'price', 'stock_min', 'stock_max', 'category_id', 'store_id', 'created_at']);
+                ['id', 'name', 'reference', 'codebar', 'price', 'stock_alert', 'category_id', 'store_id', 'created_at']);
         }
 
         if (in_array('customers', $dataTypes)) {

@@ -81,11 +81,9 @@ class ProductImportService
                         'supplier_code' => $data['supplier_code'] ?? null,
                         'price_buy'     => isset($data['price_buy']) ? (float) $data['price_buy'] : null,
                         'price_sell_1'  => isset($data['price_sell_1']) ? (float) $data['price_sell_1'] : null,
-                        'price_sell_2'  => isset($data['price_sell_2']) ? (float) $data['price_sell_2'] : null,
-                        'price'         => isset($data['price_sell_1']) ? (float) $data['price_sell_1'] : null,
-                        'stock_min'     => isset($data['stock_min']) ? (int) $data['stock_min'] : null,
-                        'stock_max'     => isset($data['stock_max']) ? (int) $data['stock_max'] : null,
-                        'store_id'      => $storeId,
+                         'price'         => isset($data['price_sell_1']) ? (float) $data['price_sell_1'] : null,
+                        'stock_alert'     => isset($data['stock_alert']) ? (int) $data['stock_alert'] : null,
+                         'store_id'      => $storeId,
                         'user_id'       => auth()->id(),
                     ], fn($v) => $v !== null)
                 );

@@ -172,8 +172,7 @@ class ReportService
             'order_items.qte',
             'order_items.price as price_sell_1_used',
             DB::raw('COALESCE(products.price_sell_1, order_items.price, 0) as price_sell_1'),
-            DB::raw('COALESCE(products.price_sell_2, 0) as price_sell_2')
-        )
+         )
         ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
         ->join('users', 'order_sales.user_id', '=', 'users.id')
         ->leftJoin('customers', 'order_sales.customer_id', '=', 'customers.id')

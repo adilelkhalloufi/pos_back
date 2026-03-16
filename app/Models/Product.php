@@ -20,9 +20,8 @@ class Product extends BaseModel
         'price',
         'price_buy',
         'price_sell_1',
-        'price_sell_2',
-        'stock_min',
-        'stock_max',
+         'stock_alert',
+ 
         'is_active',
         'is_stockable',
         'archive',
@@ -52,9 +51,7 @@ class Product extends BaseModel
 
     public const COL_PRICE = 'price';
 
-    public const COL_STOCK_MIN = 'stock_min';
-
-    public const COL_STOCK_MAX = 'stock_max';
+    public const COL_STOCK_ALERT = 'stock_alert';
 
     public const COL_IS_ACTIVE = 'is_active';
 
@@ -73,8 +70,6 @@ class Product extends BaseModel
 
     public const COL_PRICE_SELL_1 = 'price_sell_1';
 
-    public const COL_PRICE_SELL_2 = 'price_sell_2';
-
     public const COL_IS_STOCKABLE = 'is_stockable';
 
     public const COL_UNIT_ID = 'unit_id';
@@ -86,13 +81,11 @@ class Product extends BaseModel
         self::COL_PRICE => 'float',
         self::COL_PRICE_BUY => 'float',
         self::COL_PRICE_SELL_1 => 'float',
-        self::COL_PRICE_SELL_2 => 'float',
-        self::COL_IS_ACTIVE => 'boolean',
+         self::COL_IS_ACTIVE => 'boolean',
         self::COL_IS_STOCKABLE => 'boolean',
         self::COL_ARCHIVE => 'boolean',
-        self::COL_STOCK_MAX => 'integer',
-        self::COL_STOCK_MIN => 'integer',
-    ];
+        self::COL_STOCK_ALERT => 'integer',
+     ];
 
    
 
@@ -153,5 +146,10 @@ class Product extends BaseModel
     public function priceChangeLogs()
     {
         return $this->hasMany(PriceChangeLog::class);
+    }
+
+    public function barcodes()
+    {
+        return $this->hasMany(ProductBarcode::class);
     }
 }

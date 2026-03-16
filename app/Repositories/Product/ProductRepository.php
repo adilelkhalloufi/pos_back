@@ -40,7 +40,10 @@ class ProductRepository extends BaseRepository
             $query->where(function($q) use ($search) {
                 $q->where(Product::COL_NAME, 'LIKE', "%{$search}%")
                   ->orWhere(Product::COL_CODEBAR, 'LIKE', "%{$search}%")
-                  ->orWhere(Product::COL_REFERENCE, 'LIKE', "%{$search}%");
+                  ->orWhere(Product::COL_REFERENCE, 'LIKE', "%{$search}%")
+                  ->orWhereHas('barcodes', function($bq) use ($search) {
+                      $bq->where('barcode', 'LIKE', "%{$search}%");
+                  });
             });
         }
 

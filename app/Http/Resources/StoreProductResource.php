@@ -34,9 +34,8 @@ class StoreProductResource extends JsonResource
             Product::COL_REFERENCE => $this->product->reference,
             Product::COL_CODEBAR => $this->product->codebar,
             Product::COL_SLUG => $this->product->slug,
-            Product::COL_STOCK_MIN => $this->product->stock_min,
-            Product::COL_STOCK_MAX => $this->product->stock_max,
-            Product::COL_IS_ACTIVE => $this->product->is_active,
+            Product::COL_STOCK_ALERT => $this->product->stock_alert,
+             Product::COL_IS_ACTIVE => $this->product->is_active,
             Product::COL_ARCHIVE => $this->product->archive,
             Product::COL_NAME => $this->product->name,
             Product::COL_DESCRIPTION => $this->product->description,
@@ -50,6 +49,9 @@ class StoreProductResource extends JsonResource
             
         
             'qte' => 1, // this for front end to calcluat the product selected
+            'barcodes' => $this->whenLoaded('product.barcodes', function() {
+                return $this->product->barcodes->pluck('barcode')->toArray();
+            }, []),
             'category' => CategoryResource::make($this->product->category),
              'sales' => $this->whenLoaded('product.sales') ?? [],
             'purchases' => $this->whenLoaded('product.purchases') ?? [],

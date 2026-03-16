@@ -12,7 +12,7 @@ return new class() extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users');
-            $table->string('field')->comment('price_buy|price_sell_1|price_sell_2');
+            $table->string('field')->comment('price_buy|price_sell_1');
             $table->decimal('old_value', 10, 4)->nullable();
             $table->decimal('new_value', 10, 4);
             $table->date('effective_date')->nullable();

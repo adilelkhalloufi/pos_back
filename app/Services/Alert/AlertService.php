@@ -80,9 +80,8 @@ class AlertService
 
         foreach ($storeProducts as $storeProduct) {
             $currentStock = $storeProduct->stock;
-            $minStock = $storeProduct->product->stock_min ?? 0;
-            $maxStock = $storeProduct->product->stock_max ?? null;
-
+            $minStock = $storeProduct->product->stock_alert ?? 0;
+ 
             $alertType = null;
             $threshold = null;
 
@@ -95,11 +94,7 @@ class AlertService
                 $alertType = Alert::TYPE_PRODUCT_LOW_STOCK;
                 $threshold = $minStock;
             }
-            // Check for overstock (if max_stock is defined and current stock exceeds it)
-            elseif ($maxStock && $currentStock > $maxStock) {
-                $alertType = Alert::TYPE_PRODUCT_OVERSTOCK;
-                $threshold = $maxStock;
-            }
+         
 
             if ($alertType) {
                 // Check if alert already exists and is unresolved
@@ -141,9 +136,8 @@ class AlertService
 
         foreach ($storeProducts as $storeProduct) {
             $currentStock = $storeProduct->stock;
-            $minStock = $storeProduct->product->stock_min ?? 0;
-            $maxStock = $storeProduct->product->stock_max ?? null;
-
+            $minStock = $storeProduct->product->stock_alert ?? 0;
+ 
             $alertType = null;
             $threshold = null;
 

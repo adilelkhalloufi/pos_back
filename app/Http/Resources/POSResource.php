@@ -28,8 +28,7 @@ class POSResource extends JsonResource
             Product::COL_REFERENCE => $this->reference,
             Product::COL_CODEBAR => $this->codebar,
             Product::COL_SLUG => $this->slug,
-            Product::COL_STOCK_MIN => $this->stock_min,
-            Product::COL_STOCK_MAX => $this->stock_max,
+             Product::COL_STOCK_ALERT => $this->stock_alert,
             Product::COL_IS_ACTIVE => $this->is_active,
             Product::COL_ARCHIVE => $this->archive,
             Product::COL_NAME => $this->name,
@@ -43,6 +42,9 @@ class POSResource extends JsonResource
             'qte' => 1, // this for front end to calcluat the product selected
             'quantity' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_STOCK} : 0,
             'cost' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_COST} : 0,
+            'barcodes' => $this->whenLoaded('barcodes', function() {
+                return $this->barcodes->pluck('barcode')->toArray();
+            }, []),
             'category' => CategoryResource::make($this->whenLoaded('category')),
              'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],

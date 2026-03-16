@@ -22,9 +22,8 @@ class ProductResource extends JsonResource
             Product::COL_REFERENCE => $this->reference,
             Product::COL_CODEBAR => $this->codebar,
             Product::COL_SLUG => $this->slug,
-            Product::COL_STOCK_MIN => $this->stock_min,
-            Product::COL_STOCK_MAX => $this->stock_max,
-            Product::COL_IS_ACTIVE => $this->is_active,
+            Product::COL_STOCK_ALERT => $this->stock_alert,
+             Product::COL_IS_ACTIVE => $this->is_active,
             Product::COL_ARCHIVE => $this->archive,
             Product::COL_NAME => $this->name,
             Product::COL_DESCRIPTION => $this->description,
@@ -37,6 +36,9 @@ class ProductResource extends JsonResource
             AUTOCOMPLETE::VALUE->value => $this->id,
         
             'qte' => 1, // this for front end to calcluat the product selected
+            'barcodes' => $this->whenLoaded('barcodes', function() {
+                return $this->barcodes->pluck('barcode')->toArray();
+            }, []),
             'category' => CategoryResource::make($this->category),
              'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],

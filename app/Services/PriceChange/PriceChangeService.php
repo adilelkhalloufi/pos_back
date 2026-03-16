@@ -11,7 +11,7 @@ class PriceChangeService
     /** @return PriceChangeLog[] */
     public function applyBatch(array $productIds, array $prices, ?string $effectiveDate, ?string $reason): array
     {
-        $priceFields = ['price_buy', 'price_sell_1', 'price_sell_2'];
+        $priceFields = ['price_buy', 'price_sell_1'];
         $newPrices = array_filter(
             array_intersect_key($prices, array_flip($priceFields)),
             fn($v) => $v !== null
