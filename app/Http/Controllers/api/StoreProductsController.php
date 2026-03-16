@@ -98,6 +98,7 @@ class StoreProductsController extends BaseController
             $storeProduct = StoreProducts::with([
                 'product.category',
                 'product.unit',
+                'product.barcodes',
                  'store'
             ])->find($id);
 

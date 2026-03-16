@@ -150,6 +150,6 @@ class Product extends BaseModel
 
     public function barcodes()
     {
-        return $this->hasMany(ProductBarcode::class);
+        return $this->hasMany(ProductBarcode::class, 'product_id', self::COL_ID);
     }
 }

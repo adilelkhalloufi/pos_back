@@ -16,8 +16,7 @@ class PriceChangeRequest extends FormRequest
         return [
             'products'               => 'required|array|min:1',
             'products.*'             => 'integer|exists:products,id',
-            'price_buy'              => 'nullable|numeric|min:0',
-            'price_sell_1'           => 'nullable|numeric|min:0',
+             'price_sell_1'           => 'nullable|numeric|min:0',
              'effective_date'         => 'nullable|date',
             'reason'                 => 'nullable|string|max:255',
         ];

@@ -9,11 +9,12 @@ return new class() extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('supplier_code')->nullable()->after('reference')->comment('Code fournisseur');
-            $table->decimal('price_sell_1', 10, 4)->nullable()->after('price_buy')->comment('PV1 — main selling price');
-            $table->boolean('is_stockable')->default(true)->after('is_active');
-            $table->foreignId('unit_id')->nullable()->after('category_id')->constrained('units');
-            $table->foreignId('print_profile_id')->nullable()->after('unit_id')->constrained('print_profiles');
+            $table->string('supplier_code')->nullable()->comment('Code fournisseur');
+            $table->decimal('price_sell_1', 10, 4)->nullable()->comment('PV1 — main selling price');
+            $table->decimal('price_buy', 10, 4)->nullable()->comment('PA — purchase price');
+            $table->boolean('is_stockable')->default(true);
+            $table->foreignId('unit_id')->nullable();
+            $table->foreignId('print_profile_id')->nullable();
         });
     }
 
@@ -22,7 +23,6 @@ return new class() extends Migration
         Schema::table('products', function (Blueprint $table) {
             $table->dropConstrainedForeignId('unit_id');
             $table->dropConstrainedForeignId('print_profile_id');
-            $table->dropColumn(['supplier_code', 'price_sell_1', 'is_stockable']);
-        });
+         });
     }
 };
