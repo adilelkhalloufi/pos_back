@@ -9,14 +9,14 @@ use App\Models\PriceChangeLog;
 use App\Models\ProductBarcode;
 use App\Repositories\Product\ProductRepository;
 use App\Repositories\Store\StoreRepository;
- use App\Services\Product\Exceptions\ProductNotFoundException;
+use App\Services\Product\Exceptions\ProductNotFoundException;
 
 class ProductService
 {
     public function __construct(
         private readonly ProductRepository $productRepository,
         private readonly StoreRepository $storeRepository,
-     ) {}
+    ) {}
 
 
     public function findById(int $id)
@@ -29,7 +29,7 @@ class ProductService
         $product = $this->productRepository->findWith($id, Product::COL_ID, [
             'purchase.order' => fn($query) => $query->orderBy('id', 'desc')->limit(3),
             'sales.order' => fn($query) => $query->orderBy('id', 'desc')->limit(3),
-            'unit',
+            'barcodes',
             'category',
         ]);
         if (!$product instanceof Product) {
@@ -55,12 +55,12 @@ class ProductService
             Product::COL_PRICE            => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? null,
             Product::COL_PRICE_BUY        => $attributes['price_buy'] ?? null,
             Product::COL_PRICE_SELL_1     => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? null,
-             Product::COL_SUPPLIER_CODE    => $attributes['supplier_code'] ?? null,
-             Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? null,
+            Product::COL_SUPPLIER_CODE    => $attributes['supplier_code'] ?? null,
+            Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? null,
             Product::COL_ARCHIVE          => $attributes[Product::COL_ARCHIVE] ?? false,
             Product::COL_CATEGORY_ID      => $attributes[Product::COL_CATEGORY_ID] ?? null,
-             Product::COL_STOCK_ALERT        => $attributes[Product::COL_STOCK_ALERT] ?? null,
-             Product::COL_IS_ACTIVE        => $attributes[Product::COL_IS_ACTIVE] ?? true,
+            Product::COL_STOCK_ALERT        => $attributes[Product::COL_STOCK_ALERT] ?? null,
+            Product::COL_IS_ACTIVE        => $attributes[Product::COL_IS_ACTIVE] ?? true,
             Product::COL_IS_STOCKABLE     => $attributes['is_stockable'] ?? true,
             Product::COL_UNIT_ID          => $attributes['unit_id'] ?? null,
             Product::COL_PRINT_PROFILE_ID => $attributes['print_profile_id'] ?? null,
@@ -92,28 +92,28 @@ class ProductService
 
         // Handle barcodes - collect from both codebar and barcodes array
         $barcodesToSave = [];
-        
+
         // If barcodes array is provided
         if (isset($attributes['barcodes'])) {
             // Handle if it's sent as JSON string from frontend
             if (is_string($attributes['barcodes'])) {
                 $attributes['barcodes'] = json_decode($attributes['barcodes'], true) ?? [];
             }
-            
+
             if (is_array($attributes['barcodes'])) {
                 foreach ($attributes['barcodes'] as $barcode) {
                     // Handle object format {"barcode": "123"}
                     if (is_array($barcode) && isset($barcode['barcode'])) {
                         $barcode = $barcode['barcode'];
                     }
-                    
+
                     if (!empty($barcode) && is_string($barcode)) {
                         $barcodesToSave[] = trim($barcode);
                     }
                 }
             }
         }
-        
+
         // If single codebar is provided and not already in array, add it as primary
         if (!empty($attributes[Product::COL_CODEBAR])) {
             $codebar = trim($attributes[Product::COL_CODEBAR]);
@@ -121,7 +121,7 @@ class ProductService
                 array_unshift($barcodesToSave, $codebar); // Add as first (primary)
             }
         }
-        
+
         // Remove duplicates and save barcodes
         $barcodesToSave = array_values(array_unique($barcodesToSave));
         foreach ($barcodesToSave as $index => $barcode) {
@@ -155,10 +155,10 @@ class ProductService
             Product::COL_PRICE            => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? $product->price,
             Product::COL_PRICE_BUY        => $attributes['price_buy'] ?? $product->price_buy,
             Product::COL_PRICE_SELL_1     => $attributes['price_sell_1'] ?? $product->price_sell_1,
-             Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? $product->codebar,
+            Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? $product->codebar,
             Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? $product->image,
             Product::COL_STOCK_ALERT      => $attributes[Product::COL_STOCK_ALERT] ?? $product->stock_alert,
-             Product::COL_ARCHIVE          => (bool) ($attributes[Product::COL_ARCHIVE] ?? $product->archive),
+            Product::COL_ARCHIVE          => (bool) ($attributes[Product::COL_ARCHIVE] ?? $product->archive),
             Product::COL_IS_ACTIVE        => (bool) ($attributes[Product::COL_IS_ACTIVE] ?? $product->is_active),
             Product::COL_IS_STOCKABLE     => (bool) ($attributes['is_stockable'] ?? $product->is_stockable),
             Product::COL_CATEGORY_ID      => $attributes[Product::COL_CATEGORY_ID] ?? $product->category_id,
@@ -185,28 +185,28 @@ class ProductService
         // Handle barcodes update - collect from both codebar and barcodes array
         if (isset($attributes['barcodes']) || isset($attributes[Product::COL_CODEBAR])) {
             $barcodesToSave = [];
-            
+
             // If barcodes array is provided
             if (isset($attributes['barcodes'])) {
                 // Handle if it's sent as JSON string from frontend
                 if (is_string($attributes['barcodes'])) {
                     $attributes['barcodes'] = json_decode($attributes['barcodes'], true) ?? [];
                 }
-                
+
                 if (is_array($attributes['barcodes'])) {
                     foreach ($attributes['barcodes'] as $barcode) {
                         // Handle object format {"barcode": "123"}
                         if (is_array($barcode) && isset($barcode['barcode'])) {
                             $barcode = $barcode['barcode'];
                         }
-                        
+
                         if (!empty($barcode) && is_string($barcode)) {
                             $barcodesToSave[] = trim($barcode);
                         }
                     }
                 }
             }
-            
+
             // If single codebar is provided and not already in array, add it as primary
             if (isset($attributes[Product::COL_CODEBAR]) && !empty($attributes[Product::COL_CODEBAR])) {
                 $codebar = trim($attributes[Product::COL_CODEBAR]);
@@ -214,15 +214,15 @@ class ProductService
                     array_unshift($barcodesToSave, $codebar); // Add as first (primary)
                 }
             }
-            
+
             // Remove duplicates
             $barcodesToSave = array_values(array_unique($barcodesToSave));
-            
+
             // Only update if we have barcodes to save
             if (!empty($barcodesToSave)) {
                 // Delete existing barcodes
                 ProductBarcode::where('product_id', $id)->delete();
-                
+
                 // Add new barcodes
                 foreach ($barcodesToSave as $index => $barcode) {
                     ProductBarcode::create([

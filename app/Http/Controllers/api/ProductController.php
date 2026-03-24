@@ -56,14 +56,12 @@ class ProductController extends BaseController
         try {
 
             $product =  $this->productService->create($validated);
-            
+
             // Load barcodes relationship
             $product->load('barcodes');
-
         } catch (\Exception $e) {
 
             return response()->json(['error' => __('product.errors.failed_to_create'), 'message' => $e->getMessage()], 500);
-        
         }
 
         return response()->json(new ProductResource($product), 201);
@@ -75,22 +73,18 @@ class ProductController extends BaseController
     public function show($id)
     {
 
-         try {
+        try {
             $product =  $this->productService->findwithRelations($id);
-            $product->load('barcodes');
             $stores = StoreProducts::where(StoreProducts::COL_PRODUCT_ID, $id)->with('store')->get();
-        
         } catch (ProductNotFoundException $e) {
             return response()->json(['error' => __('product_errors_not_found')], 404);
         }
 
         return response()->json([
             'product' => new ProductResource($product),
-            'purchases' => $product->purchase,
-            'sales' => $product->sales,
+
             'stores' => $stores,
         ], 200);
-
     }
 
     /**
@@ -101,35 +95,28 @@ class ProductController extends BaseController
 
 
 
-          $validated = $request->validated();
+        $validated = $request->validated();
 
         try {
-            
+
             $product =  $this->productService->update($id, $validated);
-            
+
             // Load barcodes to return in response
             $product?->load('barcodes');
-
-        }catch (ProductNotFoundException $e) {
+        } catch (ProductNotFoundException $e) {
 
             return response()->json(['error' => __('product_errors_not_found')], 404);
-
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
 
             return response()->json(['error' => __('product_errors_failed_to_update'), 'message' => $e->getMessage()], 500);
-        
         }
 
- 
+
 
         return response()->json([
             'message' => __('product_successfully_updated'),
             'product' => $product ? new ProductResource($product) : null,
-         ], 200);
-
-
-        
+        ], 200);
     }
 
     /**
@@ -145,7 +132,6 @@ class ProductController extends BaseController
             $products = $this->productService->getProductsForPOS($storeId, $search);
 
             return response()->json(POSResource::collection($products), 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to fetch products',
