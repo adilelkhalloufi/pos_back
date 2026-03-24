@@ -26,12 +26,12 @@ class StoreProductsController extends BaseController
     {
         $storeId = $this->storeId();
 
-        $relations = ['product.category'];
+        $relations = ['product.category', 'product.barcodes'];
         $products = $this->storeProductService->getStoreProducts($storeId, $relations);
 
         return response()->json(StoreProductResource::collection($products), Response::HTTP_OK);
     }
-
+    
     /**
      * Get products with stock > 0 (for POS)
      */
@@ -80,7 +80,6 @@ class StoreProductsController extends BaseController
                 'store_product' => new StoreProductResource($storeProduct),
                 'message' => 'Store product created/updated successfully',
             ], Response::HTTP_CREATED);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to create/update store product',
@@ -93,13 +92,13 @@ class StoreProductsController extends BaseController
      * Show specific store product with related data
      */
     public function show(int $id)
-    {   
+    {
         try {
             $storeProduct = StoreProducts::with([
                 'product.category',
                 'product.unit',
                 'product.barcodes',
-                 'store'
+                'store'
             ])->find($id);
 
             if (!$storeProduct) {
@@ -115,7 +114,6 @@ class StoreProductsController extends BaseController
                 'store_product' => new StoreProductResource($storeProduct),
                 'stores' => $stores,
             ], Response::HTTP_OK);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to fetch store product',
@@ -158,10 +156,8 @@ class StoreProductsController extends BaseController
             return response()->json([
                 'message' => 'Store product updated successfully',
             ], Response::HTTP_OK);
-
         } catch (StoreProductNotFoundException $e) {
             return response()->json(['error' => 'Store product not found'], Response::HTTP_NOT_FOUND);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to update store product',
@@ -197,7 +193,6 @@ class StoreProductsController extends BaseController
             return response()->json([
                 'message' => 'Stock updated successfully',
             ], Response::HTTP_OK);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to update stock',
@@ -221,7 +216,6 @@ class StoreProductsController extends BaseController
             return response()->json([
                 'message' => 'Store product deleted successfully',
             ], Response::HTTP_OK);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to delete store product',
