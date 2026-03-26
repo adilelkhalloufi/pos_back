@@ -14,21 +14,10 @@ return new class() extends Migration
 
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->string('license_key')->nullable();
-            $table->boolean('is_license_expired')->default(false);
-            $table->date('license_expiry_date')->nullable();
-            $table->integer('invoice_sequence')->default(0);
-            $table->integer('purchase_sequence')->default(0);
-            $table->integer('sale_sequence')->default(0);
-            $table->string('order_prefix')->default("OR")->nullable();
-            $table->string('invoice_prefix')->default("FAC")->nullable();
-            $table->string('purchase_prefix')->default("PA")->nullable();
-            $table->string('currency')->default("USD")->nullable();
-
-
-            $table->text('document_header')->nullable();
-            $table->text('document_footer')->nullable();
-            $table->string('company_name')->nullable();
+            $table->string('key')->unique();
+            $table->text('value')->nullable();
+            $table->string('type')->default('string'); // string, integer, boolean, json
+            $table->text('description')->nullable();
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users');

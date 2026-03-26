@@ -12,6 +12,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\UserStore;
 use App\Models\Plan;
+use App\Services\Setting\SettingService;
 use App\Services\User\Exceptions\InactiveAccountException;
 use App\Services\User\Exceptions\InvalidCredentialsException;
 use App\Services\User\Exceptions\TrialExpiredException;
@@ -22,7 +23,10 @@ use Carbon\Carbon;
 
 class UserController extends BaseController
 {
-    public function __construct(private readonly UserService $userService) {}
+    public function __construct(
+        private readonly UserService $userService,
+        private readonly SettingService $settingService
+    ) {}
 
     /**
      * Authenticate user and return token
@@ -119,12 +123,8 @@ class UserController extends BaseController
             'store_id' => $store->id,
         ]);
 
-        $settings1 = Settings::create([
-            Settings::COL_ORDER_SALE_NUMBER => 0,
-            Settings::COL_ORDER_PURCHASE_NUMBER => 0,
-            Settings::COL_INVOICE_NUMBER => 0,
-            Settings::COL_STORE_ID => $store->id,
-        ]);
+        // Initialize default settings for the new store
+        $this->settingService->initializeStoreSettings($store->id);
 
 
 
@@ -179,7 +179,7 @@ class UserController extends BaseController
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
@@ -189,7 +189,7 @@ class UserController extends BaseController
         // Update user fields
         $user->fill($request->only([
             'name',
-            'email', 
+            'email',
             'phone',
             'role',
             'status',

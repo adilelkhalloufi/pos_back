@@ -18,11 +18,22 @@ class SettingsFactory extends Factory
      */
     public function definition(): array
     {
-        return [
+        $keys = [
+            Settings::KEY_INVOICE_NUMBER,
+            Settings::KEY_ORDER_SALE_NUMBER,
+            Settings::KEY_ORDER_PURCHASE_NUMBER,
+            Settings::KEY_PREFIX_INVOICE,
+            Settings::KEY_PREFIX_ORDER,
+            Settings::KEY_COMPANY_NAME,
+            Settings::KEY_MAX_PRINT_COPIES,
+        ];
 
-            Settings::COL_ORDER_PURCHASE_NUMBER => 0,
-            Settings::COL_ORDER_SALE_NUMBER => 0,
-            Settings::COL_STORE_ID => Store::pluck('id')->random(),
+        return [
+            'key' => fake()->randomElement($keys),
+            'value' => fake()->numberBetween(0, 100),
+            'type' => 'integer',
+            'description' => fake()->sentence(),
+            'store_id' => Store::pluck('id')->random(),
         ];
     }
 }

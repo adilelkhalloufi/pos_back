@@ -17,14 +17,16 @@ class SettingController extends BaseController
     /** GET /settings */
     public function show()
     {
-        $settings = $this->settingService->getSettings();
+        $settings = $this->settingService->getAllSettings();
         return response()->json($settings, Response::HTTP_OK);
     }
 
     /** PUT /settings */
     public function update(SettingsRequest $request)
     {
-        $settings = $this->settingService->updateSettings($request->validated());
+        $this->settingService->updateSettings($request->validated());
+        $settings = $this->settingService->getAllSettings();
+
         return response()->json([
             'message'  => 'Settings updated successfully.',
             'settings' => $settings,
