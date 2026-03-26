@@ -13,6 +13,11 @@ class SettingController extends BaseController
     {
         parent::__construct();
     }
+    public function index()
+    {
+        $settings = $this->settingService->getAllSettings();
+        return response()->json($settings, Response::HTTP_OK);
+    }
 
     /** GET /settings */
     public function show()

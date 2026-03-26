@@ -27,9 +27,9 @@ class SettingService
     /**
      * Get all settings for current store as array
      */
-    public function getAllSettings(): array
+    public function getAllSettings()
     {
-        return Settings::getAllForStore(currentStoreId());
+        return Settings::all();
     }
 
     // Sale Order Number methods
