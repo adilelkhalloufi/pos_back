@@ -3,38 +3,88 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Requests\SettingsRequest;
-use App\Services\Setting\SettingService;
-use Illuminate\Http\Response;
-
+use App\Repositories\SettingRepository;
+use Illuminate\Http\Request;
+ 
 class SettingController extends BaseController
 {
-    public function __construct(private readonly SettingService $settingService)
+    protected $service;
+
+    public function __construct(SettingRepository $service)
     {
-        parent::__construct();
+        $this->service = $service;
     }
+
     public function index()
     {
-        $settings = $this->settingService->getAllSettings();
-        return response()->json($settings, Response::HTTP_OK);
+        return response()->json($this->service->all());
     }
 
-    /** GET /settings */
-    public function show()
+    public function store(Request $request)
     {
-        $settings = $this->settingService->getAllSettings();
-        return response()->json($settings, Response::HTTP_OK);
+        $data = $request->validate([
+            'key' => 'required|string|unique:settings,key',
+            'value' => 'nullable|string',
+            'type' => 'string|in:string,integer,boolean,json',
+            'description' => 'nullable|string',
+        ]);
+
+        $setting = $this->service->create($data);
+        return response()->json($setting, 201);
     }
 
-    /** PUT /settings */
-    public function update(SettingsRequest $request)
+    public function show($id)
     {
-        $this->settingService->updateSettings($request->validated());
-        $settings = $this->settingService->getAllSettings();
+        $setting = $this->service->find($id);
+        if (!$setting) {
+            return response()->json(['message' => 'Setting not found'], 404);
+        }
+        return response()->json($setting);
+    }
 
-        return response()->json([
-            'message'  => 'Settings updated successfully.',
-            'settings' => $settings,
-        ], Response::HTTP_OK);
+    public function update(Request $request, $id)
+    {
+        $data = $request->validate([
+            'key' => 'sometimes|string|unique:settings,key,' . $id,
+            'value' => 'nullable|string',
+            'type' => 'string|in:string,integer,boolean,json',
+            'description' => 'nullable|string',
+        ]);
+
+        $setting = $this->service->update($id, $data);
+        if (!$setting) {
+            return response()->json(['message' => 'Setting not found'], 404);
+        }
+        return response()->json($setting);
+    }
+
+    public function destroy($id)
+    {
+        $deleted = $this->service->delete($id);
+        if (!$deleted) {
+            return response()->json(['message' => 'Setting not found'], 404);
+        }
+        return response()->json(['message' => 'Setting deleted']);
+    }
+
+    public function getByKey($key)
+    {
+        $setting = $this->service->findByKey($key);
+        if (!$setting) {
+            return response()->json(['message' => 'Setting not found'], 404);
+        }
+        return response()->json($setting);
+    }
+
+    public function setByKey(Request $request, $key)
+    {
+        $data = $request->validate([
+            'value' => 'required',
+            'type' => 'string|in:string,integer,boolean,json',
+            'description' => 'nullable|string',
+        ]);
+
+        $setting = $this->service->setValue($key, $data['value'], $data['type'] ?? 'string', $data['description'] ?? null);
+        return response()->json($setting);
     }
 }

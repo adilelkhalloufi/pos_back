@@ -93,8 +93,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     // Settings
     Route::get('/settings', [SettingController::class,'index']);
-    Route::put('/settings', [SettingController::class, 'update']);
-
+    Route::put('settings/{id}', [SettingController::class, 'update']);
     // Reports
     Route::prefix('reports')->group(function () {
         Route::get('/sales-by-item-family',         [ReportController::class, 'salesByItemFamily']);
