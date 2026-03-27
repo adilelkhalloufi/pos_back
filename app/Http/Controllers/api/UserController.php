@@ -7,12 +7,11 @@ use App\Enums\ROLES;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Resources\UserResource;
-use App\Models\Settings;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\UserStore;
 use App\Models\Plan;
-use App\Services\Setting\SettingService;
+use App\Models\Setting;
 use App\Services\User\Exceptions\InactiveAccountException;
 use App\Services\User\Exceptions\InvalidCredentialsException;
 use App\Services\User\Exceptions\TrialExpiredException;
@@ -25,8 +24,7 @@ class UserController extends BaseController
 {
     public function __construct(
         private readonly UserService $userService,
-        private readonly SettingService $settingService
-    ) {}
+     ) {}
 
     /**
      * Authenticate user and return token
@@ -44,6 +42,7 @@ class UserController extends BaseController
             return response()->json([
                 'user' => new UserResource($result['user']),
                 'token' => $result['token'],
+                'settings' => Setting::all(),
             ]);
         } catch (InvalidCredentialsException $e) {
             return response()->json([
@@ -123,8 +122,8 @@ class UserController extends BaseController
             'store_id' => $store->id,
         ]);
 
-        // Initialize default settings for the new store
-        $this->settingService->initializeStoreSettings($store->id);
+        // // Initialize default settings for the new store
+        // $this->settingService->initializeStoreSettings($store->id);
 
 
 

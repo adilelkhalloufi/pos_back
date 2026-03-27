@@ -17,7 +17,7 @@ class SettingController extends BaseController
 
     public function index()
     {
-        return response()->json($this->service->all());
+        return response()->json($this->service->getAllForStore(currentStoreId()));
     }
 
     public function store(Request $request)
