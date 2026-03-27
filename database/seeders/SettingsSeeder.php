@@ -29,25 +29,25 @@ class SettingsSeeder extends Seeder
         $settings = [
             // Sequences
             [
-                'key' => Settings::KEY_INVOICE_NUMBER,
+                'key' => 'invoice_number',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'Current invoice sequence number',
             ],
             [
-                'key' => Settings::KEY_ORDER_SALE_NUMBER,
+                'key' => 'order_sale_number',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'Current sale order sequence number',
             ],
             [
-                'key' => Settings::KEY_ORDER_PURCHASE_NUMBER,
+                'key' => 'order_purchase_number',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'Current purchase order sequence number',
             ],
             [
-                'key' => Settings::KEY_QUOTE_NUMBER,
+                'key' => 'quote_number',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'Current quote/devis sequence number',
@@ -55,25 +55,25 @@ class SettingsSeeder extends Seeder
 
             // Prefixes
             [
-                'key' => Settings::KEY_PREFIX_INVOICE,
+                'key' => 'prefix_invoice',
                 'value' => 'INV-',
                 'type' => 'string',
                 'description' => 'Prefix for invoice numbers',
             ],
             [
-                'key' => Settings::KEY_PREFIX_ORDER,
+                'key' => 'prefix_order',
                 'value' => 'ORD-',
                 'type' => 'string',
                 'description' => 'Prefix for sale order numbers',
             ],
             [
-                'key' => Settings::KEY_PREFIX_PURCHASE,
+                'key' => 'prefix_purchase',
                 'value' => 'PUR-',
                 'type' => 'string',
                 'description' => 'Prefix for purchase order numbers',
             ],
             [
-                'key' => Settings::KEY_PREFIX_QUOTE,
+                'key' => 'prefix_quote',
                 'value' => 'QUO-',
                 'type' => 'string',
                 'description' => 'Prefix for quote/devis numbers',
@@ -81,37 +81,37 @@ class SettingsSeeder extends Seeder
 
             // Company Information
             [
-                'key' => Settings::KEY_COMPANY_NAME,
+                'key' => 'company_name',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Company name displayed on documents',
             ],
             [
-                'key' => Settings::KEY_COMPANY_ADDRESS,
+                'key' => 'company_address',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Company address',
             ],
             [
-                'key' => Settings::KEY_COMPANY_PHONE,
+                'key' => 'company_phone',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Company phone number',
             ],
             [
-                'key' => Settings::KEY_COMPANY_EMAIL,
+                'key' => 'company_email',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Company email address',
             ],
             [
-                'key' => Settings::KEY_COMPANY_TAX_NUMBER,
+                'key' => 'company_tax_number',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Company tax/VAT number',
             ],
             [
-                'key' => Settings::KEY_COMPANY_LOGO,
+                'key' => 'company_logo',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Path to company logo',
@@ -119,19 +119,19 @@ class SettingsSeeder extends Seeder
 
             // Document Settings
             [
-                'key' => Settings::KEY_HEADER,
+                'key' => 'header',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Document header text',
             ],
             [
-                'key' => Settings::KEY_FOOTER,
+                'key' => 'footer',
                 'value' => '',
                 'type' => 'string',
                 'description' => 'Document footer text',
             ],
             [
-                'key' => Settings::KEY_SHOW_PAYMENT_DETAILS,
+                'key' => 'show_payment_details',
                 'value' => '1',
                 'type' => 'boolean',
                 'description' => 'Show payment details on invoice',
@@ -139,25 +139,25 @@ class SettingsSeeder extends Seeder
 
             // Printing Settings
             [
-                'key' => Settings::KEY_MAX_PRINT_COPIES,
+                'key' => 'max_print_copies',
                 'value' => '1',
                 'type' => 'integer',
                 'description' => 'Maximum number of print copies for orders/invoices',
             ],
             [
-                'key' => Settings::KEY_AUTO_PRINT_ORDER,
+                'key' => 'auto_print_order',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Automatically print orders when created',
             ],
             [
-                'key' => Settings::KEY_AUTO_PRINT_INVOICE,
+                'key' => 'auto_print_invoice',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Automatically print invoices when created',
             ],
             [
-                'key' => Settings::KEY_PRINT_AFTER_PAYMENT,
+                'key' => 'print_after_payment',
                 'value' => '1',
                 'type' => 'boolean',
                 'description' => 'Print invoice after payment is completed',
@@ -165,43 +165,43 @@ class SettingsSeeder extends Seeder
 
             // Secondary Display Settings (Afficheur)
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_ENABLED,
+                'key' => 'secondary_display_enabled',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Enable secondary display for customer',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_CONNECTION,
+                'key' => 'secondary_display_connection',
                 'value' => 'serial',
                 'type' => 'string',
                 'description' => 'Connection type for secondary display (serial, usb, network)',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_COM_PORT,
+                'key' => 'secondary_display_com_port',
                 'value' => 'COM1',
                 'type' => 'string',
                 'description' => 'COM port for secondary display',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_X,
+                'key' => 'secondary_display_x',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'X position of secondary display window',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_Y,
+                'key' => 'secondary_display_y',
                 'value' => '0',
                 'type' => 'integer',
                 'description' => 'Y position of secondary display window',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_WIDTH,
+                'key' => 'secondary_display_width',
                 'value' => '800',
                 'type' => 'integer',
                 'description' => 'Width of secondary display window',
             ],
             [
-                'key' => Settings::KEY_SECONDARY_DISPLAY_HEIGHT,
+                'key' => 'secondary_display_height',
                 'value' => '600',
                 'type' => 'integer',
                 'description' => 'Height of secondary display window',
@@ -209,25 +209,25 @@ class SettingsSeeder extends Seeder
 
             // Passport/Card Reader Settings
             [
-                'key' => Settings::KEY_PASSPORT_READER_ENABLED,
+                'key' => 'passport_reader_enabled',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Enable passport/ID card reader',
             ],
             [
-                'key' => Settings::KEY_PASSPORT_READER_COM_PORT,
+                'key' => 'passport_reader_com_port',
                 'value' => 'COM2',
                 'type' => 'string',
                 'description' => 'COM port for passport reader',
             ],
             [
-                'key' => Settings::KEY_PASSPORT_READER_BAUD_RATE,
+                'key' => 'passport_reader_baud_rate',
                 'value' => '9600',
                 'type' => 'integer',
                 'description' => 'Baud rate for passport reader',
             ],
             [
-                'key' => Settings::KEY_PASSPORT_READER_PROVIDER,
+                'key' => 'passport_reader_provider',
                 'value' => 'default',
                 'type' => 'string',
                 'description' => 'Passport reader provider/driver',
@@ -235,25 +235,25 @@ class SettingsSeeder extends Seeder
 
             // Currency & Tax Settings
             [
-                'key' => Settings::KEY_CURRENCY,
+                'key' => 'currency',
                 'value' => 'USD',
                 'type' => 'string',
                 'description' => 'Default currency code (USD, EUR, MAD, etc.)',
             ],
             [
-                'key' => Settings::KEY_CURRENCY_SYMBOL,
+                'key' => 'currency_symbol',
                 'value' => '$',
                 'type' => 'string',
                 'description' => 'Currency symbol to display',
             ],
             [
-                'key' => Settings::KEY_TAX_RATE,
+                'key' => 'tax_rate',
                 'value' => '0',
                 'type' => 'float',
                 'description' => 'Default tax rate percentage',
             ],
             [
-                'key' => Settings::KEY_TAX_INCLUSIVE,
+                'key' => 'tax_inclusive',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Prices include tax by default',
@@ -261,25 +261,25 @@ class SettingsSeeder extends Seeder
 
             // POS Settings
             [
-                'key' => Settings::KEY_LOW_STOCK_ALERT,
+                'key' => 'low_stock_alert',
                 'value' => '10',
                 'type' => 'integer',
                 'description' => 'Low stock alert threshold',
             ],
             [
-                'key' => Settings::KEY_ENABLE_BARCODE_SCANNER,
+                'key' => 'enable_barcode_scanner',
                 'value' => '1',
                 'type' => 'boolean',
                 'description' => 'Enable barcode scanner support',
             ],
             [
-                'key' => Settings::KEY_ALLOW_DECIMAL_QUANTITIES,
+                'key' => 'allow_decimal_quantities',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Allow decimal quantities for products',
             ],
             [
-                'key' => Settings::KEY_CASH_DRAWER_ENABLED,
+                'key' => 'cash_drawer_enabled',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Enable cash drawer integration',
@@ -287,13 +287,13 @@ class SettingsSeeder extends Seeder
 
             // Quote/Devis Settings
             [
-                'key' => Settings::KEY_QUOTE_VALIDITY_DAYS,
+                'key' => 'quote_validity_days',
                 'value' => '30',
                 'type' => 'integer',
                 'description' => 'Default validity period for quotes in days',
             ],
             [
-                'key' => Settings::KEY_QUOTE_TO_INVOICE_AUTO,
+                'key' => 'quote_to_invoice_auto',
                 'value' => '0',
                 'type' => 'boolean',
                 'description' => 'Automatically convert quote to invoice when accepted',
