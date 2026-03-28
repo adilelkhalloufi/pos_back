@@ -115,8 +115,8 @@ class ProductService
         }
 
         // If single codebar is provided and not already in array, add it as primary
-        if (!empty($attributes[Product::COL_CODEBAR])) {
-            $codebar = trim($attributes[Product::COL_CODEBAR]);
+        if (!empty($attributes['codebar'])) {
+            $codebar = trim($attributes['codebar']);
             if (!in_array($codebar, $barcodesToSave)) {
                 array_unshift($barcodesToSave, $codebar); // Add as first (primary)
             }
@@ -155,7 +155,7 @@ class ProductService
             Product::COL_PRICE            => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? $product->price,
             Product::COL_PRICE_BUY        => $attributes['price_buy'] ?? $product->price_buy,
             Product::COL_PRICE_SELL_1     => $attributes['price_sell_1'] ?? $product->price_sell_1,
-            Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? $product->codebar,
+            // Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? $product->codebar,
             Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? $product->image,
             Product::COL_STOCK_ALERT      => $attributes[Product::COL_STOCK_ALERT] ?? $product->stock_alert,
             Product::COL_ARCHIVE          => (bool) ($attributes[Product::COL_ARCHIVE] ?? $product->archive),
@@ -183,7 +183,7 @@ class ProductService
         }
 
         // Handle barcodes update - collect from both codebar and barcodes array
-        if (isset($attributes['barcodes']) || isset($attributes[Product::COL_CODEBAR])) {
+        if (isset($attributes['barcodes']) || isset($attributes['codebar'])) {
             $barcodesToSave = [];
 
             // If barcodes array is provided
@@ -208,8 +208,8 @@ class ProductService
             }
 
             // If single codebar is provided and not already in array, add it as primary
-            if (isset($attributes[Product::COL_CODEBAR]) && !empty($attributes[Product::COL_CODEBAR])) {
-                $codebar = trim($attributes[Product::COL_CODEBAR]);
+            if (isset($attributes['codebar']) && !empty($attributes['codebar'])) {
+                $codebar = trim($attributes['codebar']);
                 if (!in_array($codebar, $barcodesToSave)) {
                     array_unshift($barcodesToSave, $codebar); // Add as first (primary)
                 }

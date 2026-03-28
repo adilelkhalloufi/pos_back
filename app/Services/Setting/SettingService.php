@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Setting;
 
 use App\Repositories\SettingRepository;
 
@@ -25,7 +25,7 @@ class SettingService
 
     public function findByKey(string $key)
     {
-        return $this->repository->findByKey($key);
+        return $this->repository->findbyfield('key', $key);
     }
 
     public function all()
@@ -54,11 +54,38 @@ class SettingService
 
     public function getValue(string $key, $default = null)
     {
-        return $this->repository->getValue($key, $default);
+        return $this->repository->getValue($key, currentStoreId(), $default);
     }
 
     public function setValue(string $key, $value, string $type = 'string', string $description = null)
     {
-        return $this->repository->setValue($key, $value, $type, $description);
+        return $this->repository->setValue($key, $value, currentStoreId(), $type, $description);
+    }
+
+    /**
+     * Get the next purchase order number with prefix (e.g., PUR-0001)
+     *
+     * @return string
+     */
+    public function getNextPurchaseOrderNumber(): string
+    {
+        $currentNumber = (int) $this->getValue('order_purchase_number', 0);
+        $nextNumber = $currentNumber + 1;
+        $prefix = $this->getValue('prefix_purchase', 'PUR-');
+
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Increment the purchase order number in settings
+     *
+     * @return void
+     */
+    public function incrementPurchaseOrderNumber(): void
+    {
+        $currentNumber = (int) $this->getValue('order_purchase_number', 0);
+        $nextNumber = $currentNumber + 1;
+
+        $this->setValue('order_purchase_number', $nextNumber, 'integer', 'Current purchase order sequence number');
     }
 }

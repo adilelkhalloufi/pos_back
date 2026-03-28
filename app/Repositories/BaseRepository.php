@@ -62,8 +62,8 @@ abstract class BaseRepository
     public function update(string $id, array $attributes): bool
     {
         return $this->getQueryBuilder()
-                ->where($this->getModel()->getIdColumn(), $id)
-                ->update($attributes) > 0;
+            ->where($this->getModel()->getIdColumn(), $id)
+            ->update($attributes) > 0;
     }
 
     /**
@@ -100,8 +100,8 @@ abstract class BaseRepository
     public function delete(string $value, string $columnName = 'id'): bool
     {
         return $this->getQueryBuilder()
-                ->where($columnName, $value)
-                ->delete() > 0;
+            ->where($columnName, $value)
+            ->delete() > 0;
     }
 
     /**
@@ -128,7 +128,7 @@ abstract class BaseRepository
             ->get();
     }
 
-        /**
+    /**
      * Find a single model with relations.
      *
      * @param string $value
@@ -145,5 +145,8 @@ abstract class BaseRepository
         return $qb->where($columnName, $value)->first();
     }
 
- 
+    public function all()
+    {
+        return $this->getQueryBuilder()->get();
+    }
 }

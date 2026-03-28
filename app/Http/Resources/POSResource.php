@@ -19,16 +19,16 @@ class POSResource extends JsonResource
     public function toArray(Request $request): array
     {
         // Get store product data if available
-        $storeProduct = $this->whenLoaded('store', function() {
+        $storeProduct = $this->whenLoaded('store', function () {
             return $this->store->first();
         });
 
         return [
             Product::COL_ID => $this->id,
             Product::COL_REFERENCE => $this->reference,
-            Product::COL_CODEBAR => $this->codebar,
+            // Product::COL_CODEBAR => $this->codebar,
             Product::COL_SLUG => $this->slug,
-             Product::COL_STOCK_ALERT => $this->stock_alert,
+            Product::COL_STOCK_ALERT => $this->stock_alert,
             Product::COL_IS_ACTIVE => $this->is_active,
             Product::COL_ARCHIVE => $this->archive,
             Product::COL_NAME => $this->name,
@@ -37,16 +37,16 @@ class POSResource extends JsonResource
             Product::COL_IMAGE => $this->image ? asset('storage/' . $this->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->id, // this for order items
-             Product::COL_CATEGORY_ID => $this->category_id,
+            Product::COL_CATEGORY_ID => $this->category_id,
             AUTOCOMPLETE::VALUE->value => $this->id,
             'qte' => 1, // this for front end to calcluat the product selected
             'quantity' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_STOCK} : 0,
             'cost' => $storeProduct ? (float) $storeProduct->{StoreProducts::COL_COST} : 0,
-            'barcodes' => $this->whenLoaded('barcodes', function() {
+            'barcodes' => $this->whenLoaded('barcodes', function () {
                 return $this->barcodes->pluck('barcode')->toArray();
             }, []),
             'category' => CategoryResource::make($this->whenLoaded('category')),
-             'sales' => $this->whenLoaded('sales') ?? [],
+            'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],
 
         ];

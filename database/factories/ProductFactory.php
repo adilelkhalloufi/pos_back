@@ -26,12 +26,12 @@ class ProductFactory extends Factory
         // i want user has the store and the store has the product
 
         return [
-            Product::COL_NAME => ucfirst(fake()->word()).' '.ucfirst(fake()->word()),
+            Product::COL_NAME => ucfirst(fake()->word()) . ' ' . ucfirst(fake()->word()),
             Product::COL_DESCRIPTION => fake()->text(),
             Product::COL_PRICE => fake()->randomFloat(2, 0, 100),
-            Product::COL_CODEBAR => fake()->countryCode(),
+            // Product::COL_CODEBAR => fake()->countryCode(),
             Product::COL_IMAGE => fake()->imageUrl(),
-            Product::COL_QUANTITY => fake()->randomNumber(2),
+            // Product::COL_QUANTITY => fake()->randomNumber(2),
             Product::COL_ARCHIVE => $this->faker->boolean(),
             Product::COL_USER_ID => User::pluck('id')->random(),
             Product::COL_CATEGORY_ID => Category::pluck('id')->random(),

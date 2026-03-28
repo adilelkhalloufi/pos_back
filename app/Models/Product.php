@@ -13,20 +13,19 @@ class Product extends BaseModel
         'name',
         'reference',
         'supplier_code',
-        'codebar',
         'slug',
         'description',
         'image',
         'price',
         'price_buy',
         'price_sell_1',
-         'stock_alert',
- 
+        'stock_alert',
+
         'is_active',
         'is_stockable',
         'archive',
         'quantity',
-         'category_id',
+        'category_id',
         'unit_id',
         'print_profile_id',
         'user_id',
@@ -41,8 +40,6 @@ class Product extends BaseModel
 
     public const COL_REFERENCE = 'reference';
 
-    public const COL_CODEBAR = 'codebar';
-
     public const COL_SLUG = 'slug';
 
     public const COL_DESCRIPTION = 'description';
@@ -55,7 +52,7 @@ class Product extends BaseModel
 
     public const COL_IS_ACTIVE = 'is_active';
 
- 
+
     public const COL_CATEGORY_ID = 'category_id';
 
     public const COL_USER_ID = 'user_id';
@@ -81,13 +78,13 @@ class Product extends BaseModel
         self::COL_PRICE => 'float',
         self::COL_PRICE_BUY => 'float',
         self::COL_PRICE_SELL_1 => 'float',
-         self::COL_IS_ACTIVE => 'boolean',
+        self::COL_IS_ACTIVE => 'boolean',
         self::COL_IS_STOCKABLE => 'boolean',
         self::COL_ARCHIVE => 'boolean',
         self::COL_STOCK_ALERT => 'integer',
-     ];
+    ];
 
-   
+
 
     // belong to category
     public function category()

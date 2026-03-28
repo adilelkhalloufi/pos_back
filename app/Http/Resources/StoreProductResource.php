@@ -32,7 +32,7 @@ class StoreProductResource extends JsonResource
             // 'product' => ProductResource::make($this->whenLoaded('product')),
 
             Product::COL_REFERENCE => $this->product->reference,
-            Product::COL_CODEBAR => $this->product->codebar,
+            // Product::COL_CODEBAR => $this->product->codebar,
             Product::COL_SLUG => $this->product->slug,
             Product::COL_STOCK_ALERT => $this->product->stock_alert,
             Product::COL_IS_ACTIVE => $this->product->is_active,

@@ -11,13 +11,12 @@ return new class() extends Migration
      */
     public function up(): void
     {
-    
+
 
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
             $table->string('reference')->nullable();
-            $table->string('codebar')->nullable()->index();
 
             $table->string('slug')->nullable();
             $table->string('description')->nullable();
@@ -25,8 +24,8 @@ return new class() extends Migration
             $table->decimal('price')->nullable();
 
             $table->decimal('stock_alert')->nullable();
-             $table->boolean('is_active')->default(false);
-           
+            $table->boolean('is_active')->default(false);
+
 
             $table->foreignId('category_id')
                 ->nullable()

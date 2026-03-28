@@ -26,28 +26,27 @@ class ProductRepository extends BaseRepository
             ->with([
                 'category',
                 'unit',
-                'store' => function($query) use ($storeId) {
+                'store' => function ($query) use ($storeId) {
                     $query->where(StoreProducts::COL_STORE_ID, $storeId);
                 }
             ])
-            ->whereHas('store', function($query) use ($storeId) {
+            ->whereHas('store', function ($query) use ($storeId) {
                 $query->where(StoreProducts::COL_STORE_ID, $storeId)
-                      ->where(StoreProducts::COL_STOCK, '>', 0);
+                    ->where(StoreProducts::COL_STOCK, '>', 0);
             })
             ->where(Product::COL_ARCHIVE, false);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where(Product::COL_NAME, 'LIKE', "%{$search}%")
-                  ->orWhere(Product::COL_CODEBAR, 'LIKE', "%{$search}%")
-                  ->orWhere(Product::COL_REFERENCE, 'LIKE', "%{$search}%")
-                  ->orWhereHas('barcodes', function($bq) use ($search) {
-                      $bq->where('barcode', 'LIKE', "%{$search}%");
-                  });
+                    //   ->orWhere(Product::COL_CODEBAR, 'LIKE', "%{$search}%")
+                    ->orWhere(Product::COL_REFERENCE, 'LIKE', "%{$search}%")
+                    ->orWhereHas('barcodes', function ($bq) use ($search) {
+                        $bq->where('barcode', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
         return $query->get();
     }
-  
 }

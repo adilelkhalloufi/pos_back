@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Settings;
+use App\Models\Setting;
 use App\Models\Store;
 use Illuminate\Database\Seeder;
 
@@ -301,7 +301,7 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Settings::updateOrCreate(
+            Setting::updateOrCreate(
                 [
                     'key' => $setting['key'],
                     'store_id' => $storeId,
