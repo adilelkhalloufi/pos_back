@@ -11,7 +11,7 @@ use App\Repositories\Sale\SaleRepository;
 use App\Services\Alert\AlertService;
 use App\Services\Customer\CustomerService;
 use App\Services\Payement\PayementService;
- use App\Services\Sale\OrderSaleDetailService;
+use App\Services\Sale\OrderSaleDetailService;
 use App\Services\Setting\SettingService;
 use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +20,7 @@ class SaleService
 {
     public function __construct(
         private CustomerService $customerService,
-         private OrderSaleDetailService $orderSaleDetailService,
+        private OrderSaleDetailService $orderSaleDetailService,
         private PayementService $payementService,
         private SettingService $settingService,
         private SaleRepository $saleRepository,
@@ -42,25 +42,13 @@ class SaleService
         DB::beginTransaction();
         try {
             $storeId = currentStoreId();
-            $orderNumber = '';
+            // Get count of orders created today and format as 00001, 00002, etc.
+            $todayOrderCount = OrderSale::whereDate('created_at', today())->count();
+            $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
 
-            // Step 1: Create or find customer
-            $customer = $this->customerService->findOrCreate($attributes['customer'] ?? []);
-
-            // Step 2 & 3: Check if invoice or not and get order/invoice number
-            if ($attributes['is_invoice']) {
-                $orderNumber = $this->settingService->getNextSaleInvoiceNumber();
-                // Step 4: Increment the number in settings
-                $this->settingService->incrementSaleInvoiceNumber();
-            } else {
-                $orderNumber = $this->settingService->getNextSaleOrderNumber();
-                // Step 4: Increment the number in settings
-                $this->settingService->incrementSaleOrderNumber();
-            }
 
             // Step 5: Calculate total command from items and glass types with discount and advance
             $totalCommand = array_reduce($attributes['items'] ?? [], fn($sum, $item) => $sum + ($item['price'] * $item['qte']), 0);
-            $totalCommand += array_reduce($attributes['glass_types'] ?? [], fn($sum, $item) => $sum + $item['price'], 0);
 
             // Calculate Rest to Pay
             $discount = $attributes[OrderSale::COL_DISCOUNT] ?? 0;
@@ -69,11 +57,7 @@ class SaleService
             $attributes[OrderSale::COL_REST_A_PAY] = max(0, $totalCommand - $advance - $discount);
             $attributes[OrderSale::COL_TOTAL_PAYMENT] = $advance;
             // Step 6: Determine state of order
-            $attributes[OrderSale::COL_STATUS] = match (true) {
-                $attributes[OrderSale::COL_REST_A_PAY] == 0 => EnumPayementStatue::PAID->value,
-                $advance > 0 => EnumPayementStatue::AVANCE->value,
-                default => EnumPayementStatue::UNPAID->value
-            };
+            $attributes[OrderSale::COL_STATUS] = EnumPayementStatue::PAID->value;
 
             // Step 7: Create order
             $sale = OrderSale::create([
@@ -89,9 +73,9 @@ class SaleService
                 OrderSale::COL_USER_ID => auth()->id(),
                 OrderSale::COL_CUSTOMER_ID => $customer?->getId(),
                 OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
-             ]);
+            ]);
 
-          
+
 
             // Step 9 & 10: Merge type glasses and add to order sale items, create detail of order
             $allItems = array_merge($attributes['items'] ?? [], $attributes['glass_types'] ?? []);

@@ -22,18 +22,11 @@ class SaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'advance' => 'nullable|numeric',
-            'discount' => 'nullable|numeric',
-            'rest_a_pay' => 'nullable|numeric',
+
             'total_command' => 'nullable|numeric',
             'total_payment' => 'nullable|numeric',
-            'customer' => 'nullable',
             'items' => 'nullable|array',
-            'glass_types' => 'nullable|array',
-            'is_invoice' => 'nullable|boolean',
-            'is_customer' => 'nullable|boolean',
-            'prescription' => 'nullable',
-            'assurance' => 'nullable',
+            'passport_data' => 'nullable|string',
 
         ];
     }
