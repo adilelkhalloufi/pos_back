@@ -82,7 +82,7 @@ class SettingsSeeder extends Seeder
             // Company Information
             [
                 'key' => 'company_name',
-                'value' => '',
+                'value' => 'DETROIT SEA FOOD',
                 'type' => 'string',
                 'description' => 'Company name displayed on documents',
             ],
@@ -126,7 +126,8 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'footer',
-                'value' => '',
+                'value' => 'Tél : - FAX:
+ICE : 002175372000008 - IF: 31837969 - RC: 93153',
                 'type' => 'string',
                 'description' => 'Document footer text',
             ],
@@ -140,7 +141,7 @@ class SettingsSeeder extends Seeder
             // Printing Settings
             [
                 'key' => 'max_print_copies',
-                'value' => '1',
+                'value' => '3',
                 'type' => 'integer',
                 'description' => 'Maximum number of print copies for orders/invoices',
             ],
