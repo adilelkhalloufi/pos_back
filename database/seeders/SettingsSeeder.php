@@ -112,7 +112,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'company_logo',
-                'value' => '',
+                'value' => 'client.png',
                 'type' => 'string',
                 'description' => 'Path to company logo',
             ],
