@@ -46,6 +46,7 @@ class OrderSale extends BaseModel
     public const COL_CANCELLED_AT = 'cancelled_at';
     public const COL_CANCELLED_BY = 'cancelled_by';
     public const COL_CANCEL_REASON = 'cancel_reason';
+    public const COL_NOTE = 'note';
 
 
 

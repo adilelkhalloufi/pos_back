@@ -71,6 +71,7 @@ class SaleService
                 OrderSale::COL_IS_INVOICE => true,
                 OrderSale::COL_STORE_ID => $storeId,
                 OrderSale::COL_USER_ID => auth()->id(),
+                OrderSale::COL_NOTE => $attributes['passport_data'] ?? null,
                 OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
             ]);
 

@@ -38,7 +38,9 @@ return new class() extends Migration
                 ->nullable()
                 ->constrained('mode_payemnts');
 
-    
+            $table->text('note')->nullable();
+
+
 
             $table->foreignId('user_id')
                 ->nullable()
