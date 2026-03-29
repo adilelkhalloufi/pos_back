@@ -151,10 +151,7 @@ class AlertService
                 $threshold = $minStock;
             }
             // Check for overstock (if max_stock is defined and current stock exceeds it)
-            elseif ($maxStock && $currentStock > $maxStock) {
-                $alertType = Alert::TYPE_PRODUCT_OVERSTOCK;
-                $threshold = $maxStock;
-            }
+           
 
             if ($alertType) {
                 // Check if alert already exists and is unresolved

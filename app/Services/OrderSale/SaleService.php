@@ -68,17 +68,16 @@ class SaleService
                 OrderSale::COL_TOTAL_PAYMENT => $attributes[OrderSale::COL_TOTAL_PAYMENT] ?? 0,
                 OrderSale::COL_REST_A_PAY => $attributes[OrderSale::COL_REST_A_PAY],
                 OrderSale::COL_STATUS => $attributes[OrderSale::COL_STATUS],
-                OrderSale::COL_IS_INVOICE => $attributes['is_invoice'] ?? false,
+                OrderSale::COL_IS_INVOICE => true,
                 OrderSale::COL_STORE_ID => $storeId,
                 OrderSale::COL_USER_ID => auth()->id(),
-                OrderSale::COL_CUSTOMER_ID => $customer?->getId(),
                 OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
             ]);
 
 
 
             // Step 9 & 10: Merge type glasses and add to order sale items, create detail of order
-            $allItems = array_merge($attributes['items'] ?? [], $attributes['glass_types'] ?? []);
+            $allItems =  $attributes['items'];
 
             foreach ($allItems as $item) {
                 // Create order sale detail
@@ -102,24 +101,16 @@ class SaleService
                 }
             }
 
-            // Step 13: Create payment record if advance was paid
-            if ($advance > 0) {
-                $this->payementService->create($advance, $sale);
-            }
 
-            // Step 14: Update client state (customer totals)
-            $this->customerService->updateTotals($customer);
 
-            // Step 15: Check and resolve customer inactivity alerts (customer just made a purchase)
-            if ($customer) {
-                $this->resolveCustomerInactivityAlerts($customer);
-            }
+
+
 
             // Step 16: Check for product stock alerts after stock movements
             $this->checkProductStockAlertsAfterSale($storeId, $allItems);
 
             DB::commit();
-            return $sale->load(['orderItems', 'payments', 'prescription', 'customer']);
+            return $sale->load(['orderItems', 'payments']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

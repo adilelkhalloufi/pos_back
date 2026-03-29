@@ -31,7 +31,6 @@ class OrderResource extends JsonResource
             'customer' => $this->customer,
             'details' => $this->orderItems,
             'payments' => $this->payments,
-            'prescription' => $this->prescription,
             'user' => $this->user,
 
 

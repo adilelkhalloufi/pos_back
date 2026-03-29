@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Enums\AUTOCOMPLETE;
 use App\Models\OrderItems;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\StoreProducts;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -40,6 +41,8 @@ class StoreProductResource extends JsonResource
             Product::COL_NAME => $this->product->name,
             Product::COL_DESCRIPTION => $this->product->description,
             Product::COL_PRICE => (float) $this->product->price,
+            Product::COL_PRICE_SELL_1 => (float) $this->product->price_sell_1,
+
             Product::COL_IMAGE => $this->product->image ? asset('storage/' . $this->product->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
             Product::COL_CREATED_AT => $this->created_at,

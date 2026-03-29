@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
- 
+
 class OrderSale extends BaseModel
 {
     use HasFactory;
@@ -12,7 +12,7 @@ class OrderSale extends BaseModel
 
     public const TABLE_NAME = 'order_sales';
 
- 
+
     public const COL_ORDER_NUMBER = 'order_number';
 
     public const COL_CUSTOMER_ID = 'customer_id';
@@ -47,11 +47,11 @@ class OrderSale extends BaseModel
     public const COL_CANCELLED_BY = 'cancelled_by';
     public const COL_CANCEL_REASON = 'cancel_reason';
 
-    
+
 
     public function orderItems()
     {
-        return $this->hasMany(OrderItems::class,'order_id');
+        return $this->hasMany(OrderItems::class, 'order_id');
     }
 
     public function customer()
@@ -64,10 +64,7 @@ class OrderSale extends BaseModel
         return $this->hasMany(Payemnt::class, 'order_id');
     }
 
-    public function prescription()
-    {
-        return $this->hasOne(Prescription::class,'order_id');
-    }
+
 
     public function user()
     {

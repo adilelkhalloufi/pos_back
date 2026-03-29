@@ -11,14 +11,7 @@ return new class() extends Migration
      */
     public function up(): void
     {
-        // public const COL_LABEL = 'label';
 
-        // public const COL_QUANTITY = 'quantity';
-        // public const COL_PRICE = 'price';
-        // public const COL_INVOICE_PRICE = 'invoice_price';
-
-        // public const COL_DISCOUNT = 'discount';
-        // public const COL_TOTAL = 'total';
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
 
@@ -38,6 +31,7 @@ return new class() extends Migration
             $table->float('invoice_price')->nullable();
             $table->float('discount')->nullable();
             $table->float('total')->nullable();
+            $table->foreignId('category_id')->nullable();
 
             $table->timestamps();
         });

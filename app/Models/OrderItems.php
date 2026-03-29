@@ -33,6 +33,8 @@ class OrderItems extends BaseModel
 
     public const COL_TOTAL = 'total';
 
+    public const COL_CATEGORY_ID = 'category_id';
+
 
 
     // belong to order
@@ -44,5 +46,10 @@ class OrderItems extends BaseModel
     public function product()
     {
         return $this->morphTo();
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, self::COL_CATEGORY_ID);
     }
 }

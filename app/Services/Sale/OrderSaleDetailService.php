@@ -18,13 +18,9 @@ class OrderSaleDetailService
         $productId = null;
         $productType = null;
 
-        if (!empty($item[OrderItems::COL_PRODUCT_ID])) {
-            $productId = $item[OrderItems::COL_PRODUCT_ID];
-            $productType = Product::class;
-        } else {
-            $productId = $item[TypeGlasses::COL_ID] ?? null;
-            $productType = TypeGlasses::class;
-        }
+        $productId = $item[OrderItems::COL_PRODUCT_ID];
+        $productType = Product::class;
+
 
         return OrderItems::create([
             OrderItems::COL_NAME       => $item[OrderItems::COL_NAME] ?? '',
@@ -33,9 +29,10 @@ class OrderSaleDetailService
             OrderItems::COL_PRODUCT_ID => $productId,
             OrderItems::COL_PRODUCT_TYPE => $productType,
             OrderItems::COL_PRICE      => $item[OrderItems::COL_PRICE],
+            OrderItems::COL_CATEGORY_ID => $item[OrderItems::COL_CATEGORY_ID] ?? null,
             OrderItems::COL_QTE        => $item[OrderItems::COL_QTE] ?? 1,
             OrderItems::COL_TOTAL      => ($item[OrderItems::COL_QTE] ?? 1) * $item[OrderItems::COL_PRICE],
-            OrderItems::COL_INVOICE_PRICE => $item[OrderItems::COL_PRICE] ?? 0,
+            OrderItems::COL_INVOICE_PRICE => $item[Product::COL_PRICE_SELL_1] ?? 0,
         ]);
     }
 
