@@ -22,11 +22,10 @@ class SupplierResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'address' => $this->address,
-            'city' => CityResource::make($this->cites),
             'store_id' => $this->store_id,
             'created_at' => $this->created_at,
             AUTOCOMPLETE::VALUE->value => $this->id,
             AUTOCOMPLETE::NAME->value => $this->company_name,
-         ];
+        ];
     }
 }

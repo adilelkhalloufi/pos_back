@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
- use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Suppliers extends BaseModel
@@ -14,7 +14,7 @@ class Suppliers extends BaseModel
 
     public const TABLE_NAME = 'suppliers';
 
- 
+
     public const COL_FIRST_NAME = 'first_name';
 
     public const COL_LAST_NAME = 'last_name';
@@ -37,15 +37,10 @@ class Suppliers extends BaseModel
 
     public const COL_STORE_ID = 'store_id';
 
- 
+
 
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function cites(): HasOne
-    {
-        return $this->HasOne(City::class, 'id', 'city');
     }
 }
