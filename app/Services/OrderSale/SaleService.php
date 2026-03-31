@@ -111,7 +111,7 @@ class SaleService
             $this->checkProductStockAlertsAfterSale($storeId, $allItems);
 
             DB::commit();
-            return $sale->load(['orderItems', 'payments']);
+            return $sale->load(['orderItems', 'user']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

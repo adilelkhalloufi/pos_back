@@ -112,7 +112,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'company_logo',
-                'value' => 'client.png',
+                'value' => './images/client.png',
                 'type' => 'string',
                 'description' => 'Path to company logo',
             ],
@@ -126,8 +126,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'footer',
-                'value' => 'Tél : - FAX:
-ICE : 002175372000008 - IF: 31837969 - RC: 93153',
+                'value' => 'ICE : 002175372000008 - IF: 31837969 - RC: 93153',
                 'type' => 'string',
                 'description' => 'Document footer text',
             ],

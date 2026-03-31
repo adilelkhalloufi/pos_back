@@ -57,6 +57,7 @@ class OrderSaleController extends BaseController
 
         try {
             $order = $this->saleService->create($validated);
+            
         } catch (\Exception $e) {
 
             // do logs here
