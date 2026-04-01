@@ -96,12 +96,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::put('settings/{id}', [SettingController::class, 'update']);
     // Reports
     Route::prefix('reports')->group(function () {
-        Route::get('/sales-by-item-family',         [ReportController::class, 'salesByItemFamily']);
-        Route::get('/sales-by-annexe',              [ReportController::class, 'salesByAnnexe']);
-        Route::get('/sales-by-item-family-cashier', [ReportController::class, 'salesByItemFamilyCashier']);
-        Route::get('/end-of-day',                   [ReportController::class, 'endOfDay']);
-        Route::get('/sales-journal-margin',         [ReportController::class, 'salesJournalMargin']);
-        Route::get('/commands-print-list',          [ReportController::class, 'commandsPrintList']);
+        Route::get('/',         [ReportController::class, 'index']);
     });
 
     // Product Import (upload CSV/XLSX from supplier)

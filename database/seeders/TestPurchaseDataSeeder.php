@@ -109,7 +109,7 @@ class TestPurchaseDataSeeder extends Seeder
             'is_active' => true,
             'is_stockable' => true,
             'archive' => false,
-            'category_id' => Category::first()->id,
+            'category_id' => Category::latest()->first()->id,
             'user_id' => $user->id,
             'store_id' => $store->id,
         ]);
