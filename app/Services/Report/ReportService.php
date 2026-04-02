@@ -119,6 +119,7 @@ class ReportService
 
     public function GetOrdersList($storeId, $dateStart, $dateEnd, $vendorId = null)
     {
+
         $query = OrderSale::with(['orderItems', 'user'])
             ->where('store_id', $storeId)
             ->whereDate('created_at', '>=', $dateStart)
