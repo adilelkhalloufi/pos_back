@@ -97,6 +97,8 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     // Reports
     Route::prefix('reports')->group(function () {
         Route::get('/',         [ReportController::class, 'index']);
+        Route::get('/sales-by-annexe',         [ReportController::class, 'salesByAnnexe']);
+        Route::get('/orders',         [ReportController::class, 'OrderList']);
     });
 
     // Product Import (upload CSV/XLSX from supplier)

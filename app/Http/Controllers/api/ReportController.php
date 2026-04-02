@@ -36,4 +36,41 @@ class ReportController extends BaseController
         return response()->json($reportData);
     }
 
+    public function salesByAnnexe(Request $request)
+    {
+        $request->validate([
+            'date_start' => 'required|date',
+            'date_end' => 'required|date|after_or_equal:date_start',
+            'category_id' => 'nullable|exists:categories,id',
+            'price_field' => 'nullable|in:price,invoice_price',
+        ]);
+
+        $storeId = $this->storeId();
+        $dateStart = $request->input('date_start');
+        $dateEnd = $request->input('date_end');
+        $categoryId = $request->input('category_id');
+        $priceField = $request->input('price_field', 'price');
+
+        $reportData = $this->reportService->GetReportDataByCategory($storeId, $dateStart, $dateEnd, $categoryId, $priceField);
+
+        return response()->json($reportData);
+    }
+
+    public function OrderList(Request $request)
+    {
+        $request->validate([
+            'date_start' => 'required|date',
+            'date_end' => 'required|date|after_or_equal:date_start',
+            'vendor' => 'nullable|exists:users,id',
+        ]);
+
+        $storeId = $this->storeId();
+        $dateStart = $request->input('date_start');
+        $dateEnd = $request->input('date_end');
+        $vendorId = $request->input('vendor');
+
+        $orders = $this->reportService->GetOrdersList($storeId, $dateStart, $dateEnd, $vendorId);
+
+        return response()->json($orders);
+    }
 }
