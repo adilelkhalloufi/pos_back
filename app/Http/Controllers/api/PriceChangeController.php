@@ -21,32 +21,28 @@ class PriceChangeController extends BaseController
      */
     public function store(PriceChangeRequest $request)
     {
-        $data = $request->validated();
+        // {
+//     "change_type": "category",
+//     "start_date": "2026-04-02",
+//     "modification_type": "percentage",
+//     "category_values": [
+//         {
+//             "id": 6,
+//             "value": 2
+//         }
+//     ]
+// }
+// {
+//     "change_type": "article",
+//     "start_date": "2026-04-02",
+//     "modification_type": "amount",
+//     "modification_value": 7,
+//     "product_ids": [
+//         2
+//     ]
+ 
 
-        try {
-            $logs = $this->priceChangeService->applyBatch(
-                $data['products'],
-                $data,
-                $data['effective_date'] ?? null,
-                $data['reason'] ?? null
-            );
-        } catch (\InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+   }
 
-        return response()->json([
-            'message' => 'Prices updated successfully.',
-            'changes' => $logs,
-        ], Response::HTTP_OK);
-    }
-
-    /**
-     * GET /price-changes/{product}
-     * History of price changes for a product.
-     */
-    public function history(int $productId)
-    {
-        $history = $this->priceChangeService->history($productId);
-        return response()->json($history, Response::HTTP_OK);
-    }
+   
 }

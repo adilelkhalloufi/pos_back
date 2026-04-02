@@ -89,8 +89,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     // Price Changes
     Route::post('/price-changes', [PriceChangeController::class, 'store']);
-    Route::get('/price-changes/{product}', [PriceChangeController::class, 'history']);
-
+ 
     // Settings
     Route::get('/settings', [SettingController::class,'index']);
     Route::put('settings/{id}', [SettingController::class, 'update']);
