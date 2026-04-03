@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'vender1@vender1.com',
             'password' => Hash::make('password'),
             'role' => ROLES::VENDOR,
+            'statue' => EnumAccountStatue::ACTIVE,
         ]);
 
         $userStore1 = UserStore::create([

@@ -26,7 +26,8 @@ class ReportService
                 ->join('categories', 'order_items.category_id', '=', 'categories.id')
                 ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
                 ->where('order_sales.store_id', $storeId)
-                ->whereBetween('order_sales.created_at', [$dateStart, $dateEnd]);
+                ->whereDate('order_sales.created_at', '>=', $dateStart)
+                ->whereDate('order_sales.created_at', '<=', $dateEnd);
 
             // Filter by vendor if provided
             if ($vendor !== null) {
@@ -87,7 +88,8 @@ class ReportService
             ->join('categories', 'order_items.category_id', '=', 'categories.id')
             ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
             ->where('order_sales.store_id', $storeId)
-            ->whereBetween('order_sales.created_at', [$dateStart, $dateEnd])
+            ->whereDate('order_sales.created_at', '>=', $dateStart)
+            ->whereDate('order_sales.created_at', '<=', $dateEnd)
             ->where('categories.id', $categoryId)
             ->groupBy('products.name', 'categories.name')
             ->get();
