@@ -72,6 +72,7 @@ class PriceChangeController extends BaseController
                     $value = $data['value'];
                     
                     $oldPrice = $product->price;
+                    $oldPriceChanged = $product->price_sell_1;
                     $newPrice = null;
                     
                     // Calculate new price based on modification_type
@@ -93,7 +94,7 @@ class PriceChangeController extends BaseController
                     
                     $updatedProducts[] = [
                         'product_id' => $product->id,
-                        'old_price' => $oldPrice,
+                        'old_price' => $oldPriceChanged,
                         'new_price' => $newPrice,
                     ];
                     
@@ -102,7 +103,7 @@ class PriceChangeController extends BaseController
                         'product_id' => $product->id,
                         'user_id' => auth()->id(),
                         'field' => 'price_sell_1',
-                        'old_value' => $oldPrice,
+                        'old_value' => $oldPriceChanged,
                         'new_value' => $newPrice,
                         'effective_date' => $startDate,
                         'reason' => 'Batch price change',
