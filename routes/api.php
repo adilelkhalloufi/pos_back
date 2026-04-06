@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::resource('/suppliers', SuppliersController::class);
 
     Route::resource('/purchases', OrderPurchaseController::class);
+    Route::post('/purchases/import', [OrderPurchaseController::class, 'import']);
     Route::put('/purchases/{id}/approve', [OrderPurchaseController::class, 'approve']);
     Route::put('/purchases/{id}/cancel', [OrderPurchaseController::class, 'cancel']);
 

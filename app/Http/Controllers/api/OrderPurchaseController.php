@@ -4,8 +4,10 @@ namespace App\Http\Controllers\api;
 
 use App\Enums\LogParametersList;
 use App\Http\Controllers\BaseController;
+use App\Http\Requests\PurchaseImportRequest;
 use App\Http\Requests\PurchaseRequest;
 use App\Http\Resources\OrderPurchaseResource;
+use App\Services\Purchase\PurchaseImportService;
 use App\Services\Purchase\PurchaseService;
 use App\Traits\AppliesDateFilters;
 use Exception;
@@ -18,6 +20,7 @@ class OrderPurchaseController extends BaseController
 
     public function __construct(
         private readonly PurchaseService $purchaseService,
+        private readonly PurchaseImportService $purchaseImportService,
     ) {}
 
     /**
@@ -112,5 +115,39 @@ class OrderPurchaseController extends BaseController
         }
 
         return response()->json(new OrderPurchaseResource($purchase), Response::HTTP_OK);
+    }
+
+    /**
+     * Import purchase order with auto-creation of products and categories
+     * 
+     * @param PurchaseImportRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function import(PurchaseImportRequest $request)
+    {
+        $validated = $request->validated();
+        
+        try {
+            $purchase = $this->purchaseImportService->importPurchase($validated);
+
+            return response()->json([
+                'purchase' => new OrderPurchaseResource($purchase),
+                'message' => 'Purchase order imported successfully',
+            ], Response::HTTP_CREATED);
+        } catch (Exception $e) {
+            // Log the error
+            $this->logger->error(
+                'Error occurred while importing purchase order',
+                [
+                    LogParametersList::FEATURE => LogParametersList::CREATE->value,
+                    LogParametersList::ERROR_MESSAGE => $e->getMessage(),
+                    LogParametersList::ERROR_TRACE => $e->getTraceAsString(),
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Error importing purchase order: ' . $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 }
