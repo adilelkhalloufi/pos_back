@@ -103,10 +103,10 @@ class PurchaseImportService
             // Create the product
             $product = Product::create([
                 Product::COL_NAME => $productData['product_name'],
-                Product::COL_REFERENCE => $this->generateProductReference(),
+                Product::COL_REFERENCE => $productData['code_supplier'] ?? null,
                 Product::COL_SUPPLIER_CODE => $productData['code_supplier'] ?? null,
                 Product::COL_SLUG => Str::slug($productData['product_name']),
-                Product::COL_PRICE => $productData['purchase_price'],
+                Product::COL_PRICE => $productData['sell_price'] ?? 0,
                 Product::COL_PRICE_BUY => $productData['purchase_price'],
                 Product::COL_IS_ACTIVE => true,
                 Product::COL_IS_STOCKABLE => true,
@@ -140,7 +140,6 @@ class PurchaseImportService
     {
         // Try to find existing category
         $category = Category::where(Category::COL_NAME, $categoryName)
-            ->where(Category::COL_STORE_ID, $storeId)
             ->first();
 
         // If not found, create new category
@@ -154,18 +153,5 @@ class PurchaseImportService
         }
 
         return $category;
-    }
-
-    /**
-     * Generate a unique product reference
-     * 
-     * @return string
-     */
-    private function generateProductReference(): string
-    {
-        $lastProduct = Product::orderBy(Product::COL_ID, 'desc')->first();
-        $nextId = $lastProduct ? $lastProduct->id + 1 : 1;
-        
-        return 'PRD-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }
 }

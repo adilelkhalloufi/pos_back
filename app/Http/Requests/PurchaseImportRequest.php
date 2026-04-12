@@ -31,6 +31,7 @@ class PurchaseImportRequest extends FormRequest
             'products.*.code_supplier' => 'nullable|string',
             'products.*.product_name' => 'required|string',
             'products.*.purchase_price' => 'required|numeric|min:0',
+            'products.*.sell_price' => 'required|numeric|min:0',
             'products.*.quantity' => 'required|numeric|min:0.01',
             'products.*.category' => 'nullable|string',
         ];

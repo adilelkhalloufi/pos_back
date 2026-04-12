@@ -137,10 +137,7 @@ class ProductService
 
     public function update(int $id, array $attributes): ?Product
     {
-        if (isset($attributes[Product::COL_IMAGE])) {
-            $imagePath = $attributes[Product::COL_IMAGE]->store('products', 'public');
-            $attributes[Product::COL_IMAGE] = $imagePath;
-        }
+
 
         $product = $this->productRepository->find($id);
         if (!$product instanceof Product) {
@@ -152,10 +149,9 @@ class ProductService
             Product::COL_SUPPLIER_CODE    => $attributes['supplier_code'] ?? $product->supplier_code,
             Product::COL_DESCRIPTION      => $attributes[Product::COL_DESCRIPTION] ?? $product->description,
             Product::COL_SLUG             => $attributes[Product::COL_SLUG] ?? $product->slug,
-            Product::COL_PRICE            => $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? $product->price,
+            Product::COL_PRICE            => $attributes[Product::COL_PRICE] ?? $product->price,
             Product::COL_PRICE_BUY        => $attributes['price_buy'] ?? $product->price_buy,
             Product::COL_PRICE_SELL_1     => $attributes['price_sell_1'] ?? $product->price_sell_1,
-            // Product::COL_CODEBAR          => $attributes[Product::COL_CODEBAR] ?? $product->codebar,
             Product::COL_IMAGE            => $attributes[Product::COL_IMAGE] ?? $product->image,
             Product::COL_STOCK_ALERT      => $attributes[Product::COL_STOCK_ALERT] ?? $product->stock_alert,
             Product::COL_ARCHIVE          => (bool) ($attributes[Product::COL_ARCHIVE] ?? $product->archive),
