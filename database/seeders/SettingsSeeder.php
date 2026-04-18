@@ -140,7 +140,7 @@ class SettingsSeeder extends Seeder
             // Printing Settings
             [
                 'key' => 'max_print_copies',
-                'value' => '3',
+                'value' => '2',
                 'type' => 'integer',
                 'description' => 'Maximum number of print copies for orders/invoices',
             ],

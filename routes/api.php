@@ -90,15 +90,16 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     // Price Changes
     Route::post('/price-changes', [PriceChangeController::class, 'store']);
- 
+
     // Settings
-    Route::get('/settings', [SettingController::class,'index']);
+    Route::get('/settings', [SettingController::class, 'index']);
     Route::put('settings/{id}', [SettingController::class, 'update']);
     // Reports
     Route::prefix('reports')->group(function () {
         Route::get('/',         [ReportController::class, 'index']);
         Route::get('/sales-by-annexe',         [ReportController::class, 'salesByAnnexe']);
         Route::get('/orders',         [ReportController::class, 'OrderList']);
+        Route::get('/daily-category',         [ReportController::class, 'dailyCategoryReport']);
     });
 
     // Product Import (upload CSV/XLSX from supplier)
@@ -109,7 +110,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::put('/{id}/commit',   [ImportController::class, 'commit']);
     });
 
- 
+
     // Store Products Routes
     Route::prefix('store-products')->group(function () {
         Route::get('/', [StoreProductsController::class, 'index']);
@@ -157,7 +158,6 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
             Route::post('/owners/{id}/change-plan', [OwnersController::class, 'changePlan']);
             Route::post('/owners/{id}/suspend', [OwnersController::class, 'suspend']);
             Route::post('/owners/{id}/activate', [OwnersController::class, 'activate']);
-
         });
     });
 });

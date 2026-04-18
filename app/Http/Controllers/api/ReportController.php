@@ -73,4 +73,51 @@ class ReportController extends BaseController
 
         return response()->json($orders);
     }
+
+    public function dailyCategoryReport(Request $request)
+    {
+        $request->validate([
+            'date_start' => 'required|date',
+            'date_end' => 'required|date|after_or_equal:date_start',
+        ]);
+
+        $storeId = $this->storeId();
+        $dateStart = $request->input('date_start');
+        $dateEnd = $request->input('date_end');
+
+        // Extended Debug: Check various scenarios
+        $allSalesCount = \App\Models\OrderSale::count();
+        $storeAllSales = \App\Models\OrderSale::where('store_id', $storeId)->count();
+        $salesWithoutDeleted = \App\Models\OrderSale::where('store_id', $storeId)->whereNull('deleted_at')->count();
+        
+        $salesInDateRange = \App\Models\OrderSale::where('store_id', $storeId)
+            ->whereNull('deleted_at')
+            ->where('created_at', '>=', $dateStart . ' 00:00:00')
+            ->where('created_at', '<=', $dateEnd . ' 23:59:59')
+            ->count();
+
+        // Get a sample sale to see the date format
+        $sampleSale = \App\Models\OrderSale::where('store_id', $storeId)
+            ->whereNull('deleted_at')
+            ->select('id', 'order_number', 'created_at', 'store_id')
+            ->first();
+
+        $reportData = $this->reportService->GetDailyCategoryReport($storeId, $dateStart, $dateEnd);
+        
+        // Add extensive debug info
+        $reportData['debug'] = [
+            'store_id' => $storeId,
+            'date_start' => $dateStart,
+            'date_end' => $dateEnd,
+            'all_sales_in_db' => $allSalesCount,
+            'sales_for_this_store' => $storeAllSales,
+            'sales_not_deleted' => $salesWithoutDeleted,
+            'sales_in_date_range' => $salesInDateRange,
+            'sample_sale' => $sampleSale,
+        ];
+
+        return response()->json($reportData);
+ 
+
+     }
 }
