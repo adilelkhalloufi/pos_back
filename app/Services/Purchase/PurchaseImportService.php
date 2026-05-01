@@ -91,6 +91,12 @@ class PurchaseImportService
                 ->first();
         }
 
+        // If product found by barcode or supplier code, update it if import data has new barcode or purchase price
+        if ($product) {
+            $this->updateExistingProductFromImport($product, $productData);
+            return $product;
+        }
+
         // If product not found, create a new one
         if (!$product) {
             // Handle category
@@ -126,6 +132,45 @@ class PurchaseImportService
         }
 
         return $product;
+    }
+
+    /**
+     * Update an existing product from import data.
+     *
+     * @param Product $product
+     * @param array $productData
+     * @return void
+     */
+    private function updateExistingProductFromImport(Product $product, array $productData): void
+    {
+        $needsSave = false;
+
+        if (!empty($productData['purchase_price']) && $product->price_buy != $productData['purchase_price']) {
+            $product->price_buy = $productData['purchase_price'];
+            $needsSave = true;
+        }
+
+        if (!empty($productData['code_supplier']) && empty($product->supplier_code)) {
+            $product->supplier_code = $productData['code_supplier'];
+            $needsSave = true;
+        }
+
+        if (!empty($productData['codebar'])) {
+            $hasBarcode = $product->barcodes()
+                ->where(ProductBarcode::COL_BARCODE, $productData['codebar'])
+                ->exists();
+
+            if (!$hasBarcode) {
+                $product->barcodes()->create([
+                    ProductBarcode::COL_BARCODE => $productData['codebar'],
+                    ProductBarcode::COL_IS_PRIMARY => !$product->barcodes()->exists(),
+                ]);
+            }
+        }
+
+        if ($needsSave) {
+            $product->save();
+        }
     }
 
     /**
