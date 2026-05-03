@@ -61,13 +61,13 @@ class ReportController extends BaseController
         $request->validate([
             'date_start' => 'required|date',
             'date_end' => 'required|date|after_or_equal:date_start',
-            'vendor' => 'nullable|exists:users,id',
+            'vendor_id' => 'nullable|exists:users,id',
         ]);
 
         $storeId = $this->storeId();
         $dateStart = $request->input('date_start');
         $dateEnd = $request->input('date_end');
-        $vendorId = $request->input('vendor');
+        $vendorId = $request->input('vendor_id');
 
         $orders = $this->reportService->GetOrdersList($storeId, $dateStart, $dateEnd, $vendorId);
 
@@ -89,7 +89,7 @@ class ReportController extends BaseController
         $allSalesCount = \App\Models\OrderSale::count();
         $storeAllSales = \App\Models\OrderSale::where('store_id', $storeId)->count();
         $salesWithoutDeleted = \App\Models\OrderSale::where('store_id', $storeId)->whereNull('deleted_at')->count();
-        
+
         $salesInDateRange = \App\Models\OrderSale::where('store_id', $storeId)
             ->whereNull('deleted_at')
             ->where('created_at', '>=', $dateStart . ' 00:00:00')
@@ -103,7 +103,7 @@ class ReportController extends BaseController
             ->first();
 
         $reportData = $this->reportService->GetDailyCategoryReport($storeId, $dateStart, $dateEnd);
-        
+
         // Add extensive debug info
         $reportData['debug'] = [
             'store_id' => $storeId,
@@ -117,7 +117,5 @@ class ReportController extends BaseController
         ];
 
         return response()->json($reportData);
- 
-
-     }
+    }
 }
