@@ -42,6 +42,7 @@ class ReportService
 
         // Query grouped by product
         $byProduct = OrderItems::select(
+            DB::raw('(SELECT barcode FROM product_barcodes WHERE product_barcodes.product_id = products.id ORDER BY is_primary DESC LIMIT 1) as code_bar'),
             'products.id',
             'products.name as product_name',
             'categories.id as category_id',
