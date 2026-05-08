@@ -49,15 +49,27 @@ class PurchaseImportService
                 // Find or create the product
                 $product = $this->findOrCreateProduct($productData, $storeId, $userId);
 
-                // Create purchase item
-                $purchase->orderItems()->create([
-                    OrderPurchaseItems::COL_PRODUCT_ID => $product->id,
-                    OrderPurchaseItems::COL_STORE_ID => $storeId,
-                    OrderPurchaseItems::COL_NAME => $productData['product_name'],
-                    OrderPurchaseItems::COL_QUANTITY => $productData['quantity'],
-                    OrderPurchaseItems::COL_PRICE => $productData['purchase_price'],
-                    OrderPurchaseItems::COL_TOTAL => $productData['quantity'] * $productData['purchase_price'],
-                ]);
+                // Check if product already exists in this purchase order
+                $existingItem = $purchase->orderItems()
+                    ->where(OrderPurchaseItems::COL_PRODUCT_ID, $product->id)
+                    ->first();
+
+                if ($existingItem) {
+                    // Update existing item: add quantity and recalculate total
+                    $existingItem->quantity += $productData['quantity'];
+                    $existingItem->total = $existingItem->quantity * $existingItem->price;
+                    $existingItem->save();
+                } else {
+                    // Create new purchase item
+                    $purchase->orderItems()->create([
+                        OrderPurchaseItems::COL_PRODUCT_ID => $product->id,
+                        OrderPurchaseItems::COL_STORE_ID => $storeId,
+                        OrderPurchaseItems::COL_NAME => $productData['product_name'],
+                        OrderPurchaseItems::COL_QUANTITY => $productData['quantity'],
+                        OrderPurchaseItems::COL_PRICE => $productData['purchase_price'],
+                        OrderPurchaseItems::COL_TOTAL => $productData['quantity'] * $productData['purchase_price'],
+                    ]);
+                }
             }
 
             return $purchase->fresh(['orderItems.product', 'supplier']);
@@ -76,9 +88,16 @@ class PurchaseImportService
     {
         $product = null;
 
-        // Try to find by barcode first
+        // Try to find by barcode first (use numeric comparison to handle leading zeros)
         if (!empty($productData['codebar'])) {
+            // First try exact string match
             $barcode = ProductBarcode::where(ProductBarcode::COL_BARCODE, $productData['codebar'])->first();
+            
+            // If not found and barcode is numeric, try numeric comparison to catch leading zeros
+            if (!$barcode && is_numeric($productData['codebar'])) {
+                $barcode = ProductBarcode::whereRaw('CAST(' . ProductBarcode::COL_BARCODE . ' AS UNSIGNED) = ?', [(int)$productData['codebar']])->first();
+            }
+            
             if ($barcode) {
                 $product = $barcode->product;
             }
@@ -156,9 +175,17 @@ class PurchaseImportService
         }
 
         if (!empty($productData['codebar'])) {
+            // Check if barcode already exists (use numeric comparison for leading zeros)
             $hasBarcode = $product->barcodes()
                 ->where(ProductBarcode::COL_BARCODE, $productData['codebar'])
                 ->exists();
+            
+            // If not found and barcode is numeric, check with numeric comparison
+            if (!$hasBarcode && is_numeric($productData['codebar'])) {
+                $hasBarcode = $product->barcodes()
+                    ->whereRaw('CAST(' . ProductBarcode::COL_BARCODE . ' AS UNSIGNED) = ?', [(int)$productData['codebar']])
+                    ->exists();
+            }
 
             if (!$hasBarcode) {
                 $product->barcodes()->create([
