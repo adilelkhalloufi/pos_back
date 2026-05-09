@@ -10,6 +10,10 @@ class OrderSale extends BaseModel
 
     protected $guarded = [];
 
+    protected $casts = [
+        'cancelled_at' => 'datetime',
+    ];
+
     public const TABLE_NAME = 'order_sales';
 
 
@@ -80,5 +84,29 @@ class OrderSale extends BaseModel
     public function cancelledBy()
     {
         return $this->belongsTo(User::class, self::COL_CANCELLED_BY);
+    }
+
+    /**
+     * Scope a query to only include non-cancelled orders.
+     */
+    public function scopeNotCancelled($query)
+    {
+        return $query->whereNull(self::COL_CANCELLED_AT);
+    }
+
+    /**
+     * Scope a query to only include cancelled orders.
+     */
+    public function scopeCancelled($query)
+    {
+        return $query->whereNotNull(self::COL_CANCELLED_AT);
+    }
+
+    /**
+     * Check if the order is cancelled.
+     */
+    public function isCancelled(): bool
+    {
+        return $this->getAttribute(self::COL_CANCELLED_AT) !== null;
     }
 }

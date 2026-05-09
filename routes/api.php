@@ -56,6 +56,13 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
 
     Route::resource('/customers', CustomerController::class);
+
+    // Order-specific routes must come before resource route
+    Route::get('/orders/cancelled', [OrderSaleController::class, 'getCancelled']);
+    Route::get('/orders/canceled', [OrderSaleController::class, 'getCancelled']); // Alias
+    Route::put('/orders/{id}/cancel', [OrderSaleController::class, 'cancel']);
+    Route::post('/orders/{id}/payment', [OrderSaleController::class, 'addPaymentToOrder']);
+    Route::post('/orders/{id}/invoice', [OrderSaleController::class, 'updateToInvoice']);
     Route::resource('/orders', OrderSaleController::class);
 
     Route::resource('/categories', CategoryController::class);
@@ -66,9 +73,6 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::put('/purchases/{id}/approve', [OrderPurchaseController::class, 'approve']);
     Route::put('/purchases/{id}/cancel', [OrderPurchaseController::class, 'cancel']);
 
-    Route::post('/addPaymentToOrder/{id}', [OrderSaleController::class, 'addPaymentToOrder']);
-    Route::post('/updateToInvoice/{id}', [OrderSaleController::class, 'updateToInvoice']);
-    Route::put('/orders/{id}/cancel', [OrderSaleController::class, 'cancel']);
     Route::get('/caisse', [PayemntController::class, 'caisse']);
 
     Route::resource('/paid_methods', ModePayemntController::class);

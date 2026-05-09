@@ -37,6 +37,16 @@ class OrderSaleController extends BaseController
             ->getQuery()
             ->with(['customer', 'orderItems.product']);
 
+        // Exclude cancelled orders by default unless explicitly requested
+        if (!$request->has('include_cancelled') || !$request->boolean('include_cancelled')) {
+            $query->notCancelled();
+        }
+
+        // Filter to show only cancelled orders if requested
+        if ($request->has('only_cancelled') && $request->boolean('only_cancelled')) {
+            $query->cancelled();
+        }
+
         // Filter by invoice if invoice parameter is present
         if ($request->has('invoice')) {
             $query->where(OrderSale::COL_IS_INVOICE, true);
@@ -57,7 +67,6 @@ class OrderSaleController extends BaseController
 
         try {
             $order = $this->saleService->create($validated);
-            
         } catch (\Exception $e) {
 
             // do logs here
@@ -151,5 +160,26 @@ class OrderSaleController extends BaseController
             'message' => 'Order cancelled successfully.',
             'order'   => new OrderResource($order),
         ], Response::HTTP_OK);
+    }
+
+    public function getCancelled(Request $request)
+    {
+        $store = $this->the_store();
+
+        $query = $store
+            ->sales()
+            ->getQuery()
+            ->with(['customer', 'orderItems.product', 'cancelledBy'])
+            ->cancelled();
+
+        // Filter by invoice if invoice parameter is present
+        if ($request->has('invoice')) {
+            $query->where(OrderSale::COL_IS_INVOICE, true);
+        }
+
+        $query = $this->applyDateFilter($query, $request, 1000);
+        $orders = $query->get();
+
+        return response()->json(OrderResource::collection($orders), Response::HTTP_OK);
     }
 }

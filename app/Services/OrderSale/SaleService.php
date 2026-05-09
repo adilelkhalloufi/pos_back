@@ -168,7 +168,7 @@ class SaleService
                         'product_id'          => $item->product_id,
                         'store_id'            => $order->getAttribute(OrderSale::COL_STORE_ID),
                         'quantity'            => $item->qte,
-                        'type'                => 'cancellation',
+                        'type'                => 'adjustment',
                         'direction'           => 'in',
                         'price'               => $item->price,
                         'unit_cost'           => $item->price,
@@ -178,6 +178,11 @@ class SaleService
                         'note'                => "Cancellation of order: {$order->order_number}",
                     ]);
                 }
+
+                // Mark order item as cancelled
+                $item->update([
+                    \App\Models\OrderItems::COL_IS_CANCELLED => true,
+                ]);
             }
 
             // Mark records
@@ -185,7 +190,6 @@ class SaleService
                 OrderSale::COL_CANCELLED_AT => now(),
                 OrderSale::COL_CANCELLED_BY => auth()->id(),
                 OrderSale::COL_CANCEL_REASON => $reason,
-                OrderSale::COL_STATUS        => EnumOrderStatue::CANCELLED->value,
             ]);
 
             DB::commit();

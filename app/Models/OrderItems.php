@@ -35,6 +35,8 @@ class OrderItems extends BaseModel
 
     public const COL_CATEGORY_ID = 'category_id';
 
+    public const COL_IS_CANCELLED = 'is_cancelled';
+
 
 
     // belong to order

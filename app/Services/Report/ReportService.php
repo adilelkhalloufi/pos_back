@@ -27,7 +27,8 @@ class ReportService
                 ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
                 ->where('order_sales.store_id', $storeId)
                 ->whereDate('order_sales.created_at', '>=', $dateStart)
-                ->whereDate('order_sales.created_at', '<=', $dateEnd);
+                ->whereDate('order_sales.created_at', '<=', $dateEnd)
+                ->whereNull('order_sales.cancelled_at');
 
             // Filter by vendor if provided
             if ($vendor !== null) {
@@ -91,6 +92,7 @@ class ReportService
             ->where('order_sales.store_id', $storeId)
             ->whereDate('order_sales.created_at', '>=', $dateStart)
             ->whereDate('order_sales.created_at', '<=', $dateEnd)
+            ->whereNull('order_sales.cancelled_at')
             ->where('categories.id', $categoryId)
             ->groupBy('products.name', 'categories.name')
             ->get();
@@ -126,7 +128,8 @@ class ReportService
         $query = OrderSale::with(['orderItems', 'user'])
             ->where('store_id', $storeId)
             ->whereDate('created_at', '>=', $dateStart)
-            ->whereDate('created_at', '<=', $dateEnd);
+            ->whereDate('created_at', '<=', $dateEnd)
+            ->whereNull('cancelled_at');
 
         // Filter by vendor if provided
         if ($vendorId !== null) {
@@ -160,6 +163,7 @@ class ReportService
             ->where('order_sales.created_at', '>=', $dateStart . ' 00:00:00')
             ->where('order_sales.created_at', '<=', $dateEnd . ' 23:59:59')
             ->whereNull('order_sales.deleted_at')
+            ->whereNull('order_sales.cancelled_at')
             ->groupBy('sale_date', 'order_items.category_id', 'categories.name')
             ->orderBy('sale_date', 'asc')
             ->orderBy('categories.name', 'asc')

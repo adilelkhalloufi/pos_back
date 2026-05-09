@@ -27,7 +27,7 @@ class OrderResource extends JsonResource
             OrderSale::COL_REST_A_PAY => (float)$this->rest_a_pay,
             OrderSale::COL_IS_INVOICE => $this->is_invoice,
             OrderSale::COL_INVOICE_TOTAL => (float)$this->invoice_total,
-            OrderSale::COL_STATUS => EnumPayementStatue::from($this->status)->getLabel(),
+            OrderSale::COL_STATUS => EnumPayementStatue::tryFrom($this->status)?->getLabel() ?? 'N/A',
             'customer' => $this->customer,
             'details' => $this->orderItems,
             'payments' => $this->payments,
@@ -35,8 +35,12 @@ class OrderResource extends JsonResource
             'items' => $this->orderItems,
             'vendor' => $this->user,
             OrderSale::COL_NOTE => $this->note,
+            OrderSale::COL_CANCELLED_AT => $this->cancelled_at?->format('Y-m-d H:i'),
+            OrderSale::COL_CANCELLED_BY => $this->cancelledBy,
+            OrderSale::COL_CANCEL_REASON => $this->cancel_reason,
+            'is_cancelled' => $this->isCancelled(),
 
-       
+
 
 
 

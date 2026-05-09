@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\Stock;
+
 use App\Models\StockMovement;
 use App\Models\StoreProducts;
 use App\Services\Alert\AlertService;
@@ -149,11 +150,13 @@ class StockService
             // Get previous stock quantity
             $previousStock = $storeProduct->{StoreProducts::COL_STOCK};
 
-            // Calculate new stock based on movement type
+            // Calculate new stock based on movement type and direction
+            $direction = $data['direction'] ?? ($type === 'sale' || $type === 'exit' ? 'out' : 'in');
+
             $newStock = match ($type) {
                 'sale', 'exit' => $previousStock - $quantity, // Subtract for outgoing
                 'purchase', 'entry' => $previousStock + $quantity, // Add for incoming
-                'adjustment' => $quantity, // Set to specific value
+                'adjustment' => $direction === 'in' ? $previousStock + $quantity : $previousStock - $quantity, // Add or subtract based on direction
                 default => $previousStock,
             };
 
@@ -173,7 +176,7 @@ class StockService
                 StockMovement::COL_TARGET_STORE_ID => $data['target_store_id'] ?? null,
                 StockMovement::COL_STORE_ID => $data['store_id'] ?? $storeId,
                 StockMovement::COL_TYPE => $type,
-                StockMovement::COL_DIRECTION => $data['direction'] ?? ($type === 'sale' || $type === 'exit' ? 'out' : 'in'),
+                StockMovement::COL_DIRECTION => $direction,
                 StockMovement::COL_QUANTITY => $quantity,
                 StockMovement::COL_UNIT_COST => $data['unit_cost'] ?? $data['price'] ?? 0,
                 StockMovement::COL_TOTAL_COST => ($data['unit_cost'] ?? $data['price'] ?? 0) * $quantity,

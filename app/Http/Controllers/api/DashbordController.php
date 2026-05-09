@@ -60,6 +60,7 @@ class DashbordController extends BaseController
         return OrderSale::whereDate(OrderSale::COL_CREATED_AT, $date)
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
             ->where(OrderSale::COL_STORE_ID, $storeId)
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->sum(OrderSale::COL_TOTAL_COMMAND);
     }
 
@@ -71,6 +72,7 @@ class DashbordController extends BaseController
         return OrderSale::whereMonth(OrderSale::COL_CREATED_AT, $month)
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
             ->where(OrderSale::COL_STORE_ID, $storeId)
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->sum(OrderSale::COL_TOTAL_COMMAND);
     }
 
@@ -82,6 +84,7 @@ class DashbordController extends BaseController
         return OrderSale::whereDate(OrderSale::COL_CREATED_AT, $date)
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
             ->where(OrderSale::COL_STORE_ID, $storeId)
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->count();
     }
 
@@ -93,6 +96,7 @@ class DashbordController extends BaseController
         return OrderSale::whereMonth(OrderSale::COL_CREATED_AT, $month)
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
             ->where(OrderSale::COL_STORE_ID, $storeId)
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->count();
     }
 
@@ -104,6 +108,7 @@ class DashbordController extends BaseController
         $revenues = OrderSale::selectRaw('MONTH(created_at) as month, SUM(total_command) as revenue')
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
             ->where(OrderSale::COL_STORE_ID, $storeId)
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->groupByRaw('MONTH(created_at)')
             ->pluck('revenue', 'month')
             ->toArray();
@@ -124,7 +129,7 @@ class DashbordController extends BaseController
         return OrderSale::where(OrderSale::COL_STORE_ID, $storeId)
             ->with('customer') // Assuming there's a customer relationship defined
             ->whereYear(OrderSale::COL_CREATED_AT, $year)
-
+            ->whereNull(OrderSale::COL_CANCELLED_AT)
             ->orderBy(OrderSale::COL_CREATED_AT, 'desc')
             ->limit(5)
             ->get()
@@ -139,6 +144,7 @@ class DashbordController extends BaseController
         $genderCounts = OrderSale::join('customers', 'order_sales.customer_id', '=', 'customers.id')
             ->where('order_sales.store_id', $storeId)
             ->whereYear('order_sales.' . OrderSale::COL_CREATED_AT, $year)
+            ->whereNull('order_sales.' . OrderSale::COL_CANCELLED_AT)
             ->selectRaw('customers.gender, COUNT(*) as count')
             ->groupBy('customers.gender')
             ->pluck('count', 'gender')
@@ -162,6 +168,7 @@ class DashbordController extends BaseController
         return OrderSale::join('users', 'order_sales.user_id', '=', 'users.id')
             ->where('order_sales.store_id', $storeId)
             ->whereYear('order_sales.' . OrderSale::COL_CREATED_AT, $year)
+            ->whereNull('order_sales.' . OrderSale::COL_CANCELLED_AT)
             ->selectRaw('users.id, users.name, SUM(order_sales.total_command) as total_ca, COUNT(order_sales.id) as order_count')
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('total_ca')
@@ -184,23 +191,24 @@ class DashbordController extends BaseController
     {
         return OrderItems::whereHas('order', function ($query) use ($storeId, $year) {
             $query->where(OrderSale::COL_STORE_ID, $storeId)
-                  ->whereYear(OrderSale::COL_CREATED_AT, $year);
+                ->whereYear(OrderSale::COL_CREATED_AT, $year)
+                ->whereNull(OrderSale::COL_CANCELLED_AT);
         })
-        ->where('product_type', '!=', TypeGlasses::class)
-        ->selectRaw('product_id, product_type, name, SUM(qte) as total_sold')
-        ->groupBy('product_id', 'product_type', 'name')
-        ->orderByDesc('total_sold')
-        ->limit(10)
-        ->get()
-        ->map(function ($item) {
-            return [
-                'product_id' => $item->product_id,
-                'product_type' => $item->product_type,
-                'name' => $item->name,
-                'total_sold' => (int) $item->total_sold,
-            ];
-        })
-        ->toArray();
+            ->where('product_type', '!=', TypeGlasses::class)
+            ->selectRaw('product_id, product_type, name, SUM(qte) as total_sold')
+            ->groupBy('product_id', 'product_type', 'name')
+            ->orderByDesc('total_sold')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'product_type' => $item->product_type,
+                    'name' => $item->name,
+                    'total_sold' => (int) $item->total_sold,
+                ];
+            })
+            ->toArray();
     }
 
     /**
@@ -210,22 +218,23 @@ class DashbordController extends BaseController
     {
         return OrderItems::whereHas('order', function ($query) use ($storeId, $year) {
             $query->where(OrderSale::COL_STORE_ID, $storeId)
-                  ->whereYear(OrderSale::COL_CREATED_AT, $year);
+                ->whereYear(OrderSale::COL_CREATED_AT, $year)
+                ->whereNull(OrderSale::COL_CANCELLED_AT);
         })
-        ->where('product_type', TypeGlasses::class)
-        ->selectRaw('product_id, product_type, name, SUM(qte) as total_sold')
-        ->groupBy('product_id', 'product_type', 'name')
-        ->orderByDesc('total_sold')
-        ->limit(10)
-        ->get()
-        ->map(function ($item) {
-            return [
-                'product_id' => $item->product_id,
-                'product_type' => $item->product_type,
-                'name' => $item->name,
-                'total_sold' => (int) $item->total_sold,
-            ];
-        })
-        ->toArray();
+            ->where('product_type', TypeGlasses::class)
+            ->selectRaw('product_id, product_type, name, SUM(qte) as total_sold')
+            ->groupBy('product_id', 'product_type', 'name')
+            ->orderByDesc('total_sold')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'product_type' => $item->product_type,
+                    'name' => $item->name,
+                    'total_sold' => (int) $item->total_sold,
+                ];
+            })
+            ->toArray();
     }
 }
