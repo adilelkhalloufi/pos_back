@@ -36,6 +36,7 @@ class StoreProductResource extends JsonResource
             // Product::COL_CODEBAR => $this->product->codebar,
             Product::COL_SLUG => $this->product->slug,
             Product::COL_STOCK_ALERT => $this->product->stock_alert,
+            Product::COL_PRICE_BUY => (float) $this->product->price_buy,
             Product::COL_IS_ACTIVE => $this->product->is_active,
             Product::COL_ARCHIVE => $this->product->archive,
             Product::COL_NAME => $this->product->name,

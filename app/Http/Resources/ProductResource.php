@@ -30,7 +30,6 @@ class ProductResource extends JsonResource
             Product::COL_PRICE => (float) $this->price,
             Product::COL_IMAGE => $this->image ? asset('storage/' . $this->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
-            Product::COL_CREATED_AT => $this->created_at,
             Product::COL_PRICE_BUY => (float) $this->price_buy,
             Product::COL_PRICE_SELL_1 => (float) $this->price_sell_1,
             OrderItems::COL_PRODUCT_ID => $this->id, // this for order items
