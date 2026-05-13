@@ -79,11 +79,13 @@ class ReportController extends BaseController
         $request->validate([
             'date_start' => 'required|date',
             'date_end' => 'required|date|after_or_equal:date_start',
+            'price_field' => 'nullable|in:price,invoice_price',
         ]);
 
         $storeId = $this->storeId();
         $dateStart = $request->input('date_start');
         $dateEnd = $request->input('date_end');
+        $priceField = $request->input('price_field', 'invoice_price');
 
         // Extended Debug: Check various scenarios
         $allSalesCount = \App\Models\OrderSale::count();
@@ -102,7 +104,7 @@ class ReportController extends BaseController
             ->select('id', 'order_number', 'created_at', 'store_id')
             ->first();
 
-        $reportData = $this->reportService->GetDailyCategoryReport($storeId, $dateStart, $dateEnd);
+        $reportData = $this->reportService->GetDailyCategoryReport($storeId, $dateStart, $dateEnd, $priceField);
 
         // Add extensive debug info
         $reportData['debug'] = [

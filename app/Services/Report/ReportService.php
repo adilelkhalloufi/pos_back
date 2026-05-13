@@ -141,8 +141,10 @@ class ReportService
         return OrderResource::collection($orders);
     }
 
-    public function GetDailyCategoryReport($storeId, $dateStart, $dateEnd)
+    public function GetDailyCategoryReport($storeId, $dateStart, $dateEnd, $priceField = 'invoice_price')
     {
+        $priceField = in_array($priceField, ['price', 'invoice_price'], true) ? $priceField : 'invoice_price';
+
         // Get all categories for this store (or all categories if store_id doesn't filter properly)
         $allCategories = \App\Models\Category::select('id', 'name')
             ->orderBy('name', 'asc')
@@ -155,7 +157,7 @@ class ReportService
             'order_items.category_id as category_id',
             'categories.name as category_name',
             DB::raw('SUM(order_items.qte) as total_quantity'),
-            DB::raw('SUM(order_items.qte * order_items.invoice_price) as total_amount')
+            DB::raw('SUM(order_items.qte * order_items.' . $priceField . ') as total_amount')
         )
             ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
             ->leftJoin('categories', 'order_items.category_id', '=', 'categories.id')
