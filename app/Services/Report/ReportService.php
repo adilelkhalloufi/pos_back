@@ -3,6 +3,7 @@
 namespace App\Services\Report;
 
 use App\Http\Resources\OrderResource;
+use App\Models\Category;
 use App\Models\OrderItems;
 use App\Models\OrderSale;
 use App\Models\User;
@@ -75,13 +76,20 @@ class ReportService
         ];
     }
 
-    public function GetReportDataByCategory($storeId, $dateStart, $dateEnd, $categoryId, $priceField = 'price')
+    public function GetReportDataByCategory($storeId, $dateStart, $dateEnd, $categoryId, $priceField = 'invoice_price')
     {
-        $priceField = in_array($priceField, ['price', 'invoice_price'], true) ? $priceField : 'price';
+        $priceField = in_array($priceField, ['price', 'invoice_price'], true) ? $priceField : 'invoice_price';
+
+        $categoryName = '';
+        if ($categoryId !== null) {
+            $categoryName = Category::find($categoryId)?->name ?? '';
+        }
 
         // Get category name and products data
         $reportData = OrderItems::select(
+            'products.id as product_id',
             'products.name as product_name',
+            'categories.id as category_id',
             'categories.name as category_name',
             DB::raw('SUM(order_items.qte) as total_quantity'),
             DB::raw('SUM(order_items.qte * order_items.' . $priceField . ') as total_price')
@@ -92,33 +100,95 @@ class ReportService
             ->where('order_sales.store_id', $storeId)
             ->whereDate('order_sales.created_at', '>=', $dateStart)
             ->whereDate('order_sales.created_at', '<=', $dateEnd)
-            ->whereNull('order_sales.cancelled_at')
-            ->where('categories.id', $categoryId)
-            ->groupBy('products.name', 'categories.name')
+            ->whereNull('order_sales.cancelled_at');
+
+        if ($categoryId !== null) {
+            $reportData->where('categories.id', $categoryId);
+        }
+
+        $reportData = $reportData
+            ->groupBy('products.id', 'products.name', 'categories.id', 'categories.name')
             ->get();
 
         // Format the response
         $items = $reportData->map(function ($item) {
             return [
+                'product_id' => $item->product_id,
                 'name' => $item->product_name,
+                'category_id' => $item->category_id,
+                'category_name' => $item->category_name,
                 'nbr_articles' => (int) $item->total_quantity,
                 'ca' => (float) $item->total_price,
             ];
         })->toArray();
 
-        $categoryName = $reportData->first()?->category_name ?? '';
         $totalArticles = $reportData->sum('total_quantity');
         $totalCa = $reportData->sum('total_price');
+
+        // Daily product sales per date
+        $dailySalesData = OrderItems::select(
+            DB::raw('DATE(order_sales.created_at) as sale_date'),
+            'order_items.product_id',
+            'products.name as product_name',
+            'order_items.category_id as category_id',
+            'categories.name as category_name',
+            DB::raw('SUM(order_items.qte) as total_quantity'),
+            DB::raw('SUM(order_items.qte * order_items.' . $priceField . ') as total_amount')
+        )
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->join('categories', 'order_items.category_id', '=', 'categories.id')
+            ->join('order_sales', 'order_items.order_id', '=', 'order_sales.id')
+            ->where('order_sales.store_id', $storeId)
+            ->where('order_sales.created_at', '>=', $dateStart . ' 00:00:00')
+            ->where('order_sales.created_at', '<=', $dateEnd . ' 23:59:59')
+            ->whereNull('order_sales.deleted_at')
+            ->whereNull('order_sales.cancelled_at');
+
+        if ($categoryId !== null) {
+            $dailySalesData->where('categories.id', $categoryId);
+        }
+
+        $dailySalesData = $dailySalesData
+            ->groupBy('sale_date', 'order_items.product_id', 'products.name', 'order_items.category_id', 'categories.name')
+            ->orderBy('sale_date', 'asc')
+            ->orderBy('products.name', 'asc')
+            ->get();
+
+        $salesByDate = [];
+        foreach ($dailySalesData as $row) {
+            $salesByDate[$row->sale_date][] = [
+                'product_id' => $row->product_id,
+                'product_name' => $row->product_name,
+                'category_id' => $row->category_id,
+                'category_name' => $row->category_name,
+                'nbr_articles' => (int) $row->total_quantity,
+                'ca' => (float) $row->total_amount,
+            ];
+        }
+
+        $startDate = \Carbon\Carbon::parse($dateStart);
+        $endDate = \Carbon\Carbon::parse($dateEnd);
+        $dateRange = [];
+
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $currentDate = $date->format('Y-m-d');
+            $dateRange[] = [
+                'date' => $currentDate,
+                'products' => $salesByDate[$currentDate] ?? [],
+            ];
+        }
 
         return [
             'period' => [
                 'start' => $dateStart,
                 'end' => $dateEnd,
             ],
+            'category_id' => $categoryId,
             'category_name' => $categoryName,
             'items' => $items,
             'total_articles' => (int) $totalArticles,
             'total_ca' => (float) $totalCa,
+            'daily_products' => $dateRange,
         ];
     }
 
