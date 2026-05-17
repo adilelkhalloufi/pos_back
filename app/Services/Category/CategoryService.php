@@ -44,7 +44,7 @@ class CategoryService
 
         $category = $this->categoryRepository->update($id, [
             Category::COL_NAME => $attributes[Category::COL_NAME],
-            Category::COL_DESCRIPTION => $attributes[Category::COL_DESCRIPTION],
+            Category::COL_DESCRIPTION => $attributes[Category::COL_DESCRIPTION] ?? null,
             Category::COL_DISPLAY_ORDER => $attributes[Category::COL_DISPLAY_ORDER] ?? 0,
         ]);
 
