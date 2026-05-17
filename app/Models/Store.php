@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Store extends BaseModel
 {
- 
+
     public const TABLE_NAME = 'stores';
 
 
@@ -44,6 +44,9 @@ class Store extends BaseModel
 
     public const COL_OWNER_ID = 'owner_id';
 
+    public const COL_COSTING_METHOD = 'costing_method';
+
+    public const COL_TARGET_FOOD_COST_PERCENTAGE = 'target_food_cost_percentage';
 
 
     public function owner()
@@ -86,10 +89,15 @@ class Store extends BaseModel
         return $this->hasMany(Suppliers::class, 'store_id');
     }
 
-  
+
 
     public function payments()
     {
         return $this->hasMany(Payemnt::class, 'store_id');
+    }
+
+    public function recipes()
+    {
+        return $this->hasMany(Recipe::class, 'store_id');
     }
 }

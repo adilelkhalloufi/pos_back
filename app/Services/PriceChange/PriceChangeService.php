@@ -4,10 +4,18 @@ namespace App\Services\PriceChange;
 
 use App\Models\PriceChangeLog;
 use App\Models\Product;
+use App\Services\Costing\CostingService;
 use Illuminate\Support\Facades\DB;
 
 class PriceChangeService
 {
+    protected $costingService;
+
+    public function __construct(CostingService $costingService)
+    {
+        $this->costingService = $costingService;
+    }
+
     /** @return PriceChangeLog[] */
     public function applyBatch(array $productIds, array $prices, ?string $effectiveDate, ?string $reason): array
     {
@@ -50,6 +58,12 @@ class PriceChangeService
                 }
 
                 $product->update(array_map('floatval', $newPrices));
+            }
+
+            // Recalculate recipe costs for all affected products
+            // This ensures menu items reflect updated ingredient costs
+            foreach ($productIds as $productId) {
+                $this->costingService->recalculateRecipeCostsForProduct($productId);
             }
         });
 
