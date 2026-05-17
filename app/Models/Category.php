@@ -13,7 +13,7 @@ class Category extends BaseModel
 
     public const TABLE_NAME = 'categories';
 
- 
+
     public const COL_NAME = 'name';
 
     public const COL_SLUG = 'slug';
@@ -22,9 +22,11 @@ class Category extends BaseModel
 
     public const COL_USER_ID = 'user_id';
 
+    public const COL_DISPLAY_ORDER = 'display_order';
+
     public const COL_STORE_ID = 'store_id';
 
- 
+
 
     // has many products
     public function products()

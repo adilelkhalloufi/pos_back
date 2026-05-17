@@ -23,9 +23,9 @@ class CategoryController extends BaseController
     public function index()
     {
         // Get all categories for the store and the category has no store bring too
-       $categories =  $this->categoryService->findByStoreId(currentStoreId());
+        $categories =  $this->categoryService->findByStoreId(currentStoreId());
 
-       return response()->json($categories, 200);
+        return response()->json($categories, 200);
     }
 
     /**
@@ -43,24 +43,28 @@ class CategoryController extends BaseController
     {
         $validatedData = $request->validate([
             Category::COL_NAME => 'required',
+            Category::COL_DESCRIPTION => 'nullable',
+            Category::COL_DISPLAY_ORDER => 'nullable|integer',
         ]);
 
         $category = $this->categoryService->create($validatedData);
         return response()->json($category, 201);
     }
 
-  
+
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
             Category::COL_NAME => 'required',
+            Category::COL_DESCRIPTION => 'nullable',
+            Category::COL_DISPLAY_ORDER => 'nullable|integer',
         ]);
 
-        $category = $this->categoryService->update($id, $validatedData);  
+        $category = $this->categoryService->update($id, $validatedData);
 
         return response()->json([
             'message' => 'Category updated successfully',
-        
+
         ], 200);
     }
 

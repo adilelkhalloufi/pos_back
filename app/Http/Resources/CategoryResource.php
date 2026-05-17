@@ -18,6 +18,8 @@ class CategoryResource extends JsonResource
         return [
             Category::COL_ID => $this->id,
             Category::COL_NAME => $this->name,
+            Category::COL_DESCRIPTION => $this->description,
+            Category::COL_DISPLAY_ORDER => $this->display_order,
 
         ];
     }

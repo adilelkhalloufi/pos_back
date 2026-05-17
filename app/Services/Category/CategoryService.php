@@ -29,6 +29,7 @@ class CategoryService
             // Category::COL_DESCRIPTION => $attributes[Category::COL_DESCRIPTION],
             Category::COL_STORE_ID => currentStoreId(),
             Category::COL_USER_ID => auth()->id(),
+            Category::COL_DISPLAY_ORDER => $attributes[Category::COL_DISPLAY_ORDER] ?? 0,
         ]);
 
         return $store;
@@ -44,6 +45,7 @@ class CategoryService
         $category = $this->categoryRepository->update($id, [
             Category::COL_NAME => $attributes[Category::COL_NAME],
             Category::COL_DESCRIPTION => $attributes[Category::COL_DESCRIPTION],
+            Category::COL_DISPLAY_ORDER => $attributes[Category::COL_DISPLAY_ORDER] ?? 0,
         ]);
 
         return $category;
