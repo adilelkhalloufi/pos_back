@@ -273,6 +273,12 @@ class SettingsSeeder extends Seeder
                 'description' => 'Enable barcode scanner support',
             ],
             [
+                'key' => 'pos_view_mode',
+                'value' => 'barcode',
+                'type' => 'string',
+                'description' => 'POS viewer mode: barcode = scan product by barcode; categories = show categories and products in chosen category; normal = select client and table then search/select products',
+            ],
+            [
                 'key' => 'allow_decimal_quantities',
                 'value' => '0',
                 'type' => 'boolean',
