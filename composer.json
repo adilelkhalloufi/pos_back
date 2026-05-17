@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
+    "name": "MarGest",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Point of Sale system for DutyFree.",
     "keywords": [
         "laravel",
         "framework"
