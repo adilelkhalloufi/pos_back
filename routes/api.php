@@ -8,6 +8,9 @@ use App\Http\Controllers\api\DashbordController;
 use App\Http\Controllers\api\ExportController;
 use App\Http\Controllers\api\ImportController;
 use App\Http\Controllers\api\InventaryController;
+use App\Http\Controllers\api\MenuCategoryController;
+use App\Http\Controllers\api\MenuController;
+use App\Http\Controllers\api\MenuItemController;
 use App\Http\Controllers\api\ModePayemntController;
 use App\Http\Controllers\api\OrderPurchaseController;
 use App\Http\Controllers\api\OrderSaleController;
@@ -25,6 +28,8 @@ use App\Http\Controllers\api\StoreProductsController;
 use App\Http\Controllers\api\SuppliersController;
 use App\Http\Controllers\api\TransfertController;
 use App\Http\Controllers\api\UnitController;
+use App\Http\Controllers\api\UnitConversionController;
+use App\Http\Controllers\api\StockDeductionController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Middleware\EnsureTrialIsValid;
 use Illuminate\Support\Facades\Route;
@@ -150,6 +155,52 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::post('/generate', [AlertController::class, 'generate']);
         Route::post('/bulk-read', [AlertController::class, 'bulkMarkAsRead']);
         Route::post('/bulk-resolve', [AlertController::class, 'bulkMarkAsResolved']);
+    });
+
+    // Menu Management Routes (Phase 2)
+    Route::prefix('menus')->group(function () {
+        Route::get('/', [MenuController::class, 'index']);
+        Route::get('/currently-available', [MenuController::class, 'currentlyAvailable']);
+        Route::get('/statistics', [MenuController::class, 'statistics']);
+        Route::post('/', [MenuController::class, 'store']);
+        Route::get('/{id}', [MenuController::class, 'show']);
+        Route::put('/{id}', [MenuController::class, 'update']);
+        Route::delete('/{id}', [MenuController::class, 'destroy']);
+    });
+
+    Route::prefix('menu-categories')->group(function () {
+        Route::post('/', [MenuCategoryController::class, 'store']);
+        Route::put('/{id}', [MenuCategoryController::class, 'update']);
+        Route::delete('/{id}', [MenuCategoryController::class, 'destroy']);
+    });
+
+    Route::prefix('menu-items')->group(function () {
+        Route::get('/by-profitability', [MenuItemController::class, 'byProfitability']);
+        Route::post('/', [MenuItemController::class, 'store']);
+        Route::get('/{id}', [MenuItemController::class, 'show']);
+        Route::put('/{id}', [MenuItemController::class, 'update']);
+        Route::delete('/{id}', [MenuItemController::class, 'destroy']);
+        Route::get('/{id}/profitability', [MenuItemController::class, 'profitability']);
+        Route::post('/{id}/toggle-availability', [MenuItemController::class, 'toggleAvailability']);
+    });
+
+    // Unit Conversions (Phase 3)
+    Route::prefix('unit-conversions')->group(function () {
+        Route::get('/', [UnitConversionController::class, 'index']);
+        Route::post('/', [UnitConversionController::class, 'store']);
+        Route::put('/{id}', [UnitConversionController::class, 'update']);
+        Route::delete('/{id}', [UnitConversionController::class, 'destroy']);
+        Route::post('/convert', [UnitConversionController::class, 'convert']);
+        Route::post('/create-standard', [UnitConversionController::class, 'createStandard']);
+    });
+
+    // Stock Deduction (Phase 3)
+    Route::prefix('stock')->group(function () {
+        Route::post('/deduct', [StockDeductionController::class, 'deduct']);
+        Route::post('/check-availability', [StockDeductionController::class, 'checkAvailability']);
+        Route::post('/simulate', [StockDeductionController::class, 'simulate']);
+        Route::get('/theoretical-consumption', [StockDeductionController::class, 'getTheoreticalConsumption']);
+        Route::get('/variance-report', [StockDeductionController::class, 'getVarianceReport']);
     });
 
     // Data Export Route (for owners only)

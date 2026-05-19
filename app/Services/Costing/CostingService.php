@@ -218,11 +218,12 @@ class CostingService
     /**
      * Recalculate costs for all recipes using a specific product
      * Called when product price changes
+     * Also updates menu items linked to affected recipes
      * 
      * @param int $productId
-     * @return int Number of recipes updated
+     * @return array ['recipes_updated', 'menu_items_updated']
      */
-    public function recalculateRecipeCostsForProduct(int $productId): int
+    public function recalculateRecipeCostsForProduct(int $productId): array
     {
         $recipeIngredients = \App\Models\RecipeIngredient::where('product_id', $productId)->get();
 
@@ -239,6 +240,23 @@ class CostingService
             }
         }
 
-        return count($updatedRecipes);
+        // Update menu items linked to affected recipes
+        $menuItemsUpdated = 0;
+        foreach ($updatedRecipes as $recipeId) {
+            $menuItems = \App\Models\MenuItem::where('recipe_id', $recipeId)
+                ->where('item_type', \App\Models\MenuItem::ITEM_TYPE_RECIPE)
+                ->get();
+
+            foreach ($menuItems as $menuItem) {
+                if ($menuItem->updateCostFromRecipe()) {
+                    $menuItemsUpdated++;
+                }
+            }
+        }
+
+        return [
+            'recipes_updated' => count($updatedRecipes),
+            'menu_items_updated' => $menuItemsUpdated,
+        ];
     }
 }
