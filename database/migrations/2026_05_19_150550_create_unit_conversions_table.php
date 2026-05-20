@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('from_unit_id')->constrained('units')->onDelete('cascade');
             $table->foreignId('to_unit_id')->constrained('units')->onDelete('cascade');
-            $table->decimal('conversion_factor', 12, 6)->comment('Multiplier to convert from_unit to to_unit (e.g., 1 KG = 1000 Gram, factor: 1000)');
+            $table->decimal('conversion_factor', 16, 6)->comment('Multiplier to convert from_unit to to_unit (e.g., 1 KG = 1000 Gram, factor: 1000)');
             $table->foreignId('store_id')->nullable()->constrained('stores')->onDelete('cascade');
             $table->timestamps();
 

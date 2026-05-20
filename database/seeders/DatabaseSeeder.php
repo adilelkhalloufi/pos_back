@@ -54,6 +54,9 @@ class DatabaseSeeder extends Seeder
             'store_id' => $store1->id,
         ]);
 
+        // Seed units and conversions (must be early for products to use)
+        $this->call(UnitsAndConversionsSeeder::class);
+
         // Seed settings for all stores
         $this->call(SettingsSeeder::class);
 
