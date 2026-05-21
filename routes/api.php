@@ -21,6 +21,7 @@ use App\Http\Controllers\api\PriceChangeController;
 use App\Http\Controllers\api\PrintProfileController;
 use App\Http\Controllers\api\ProductComponentController;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\RecipeController;
 use App\Http\Controllers\api\ReportController;
 use App\Http\Controllers\api\SettingController;
 use App\Http\Controllers\api\StoreController;
@@ -185,6 +186,22 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::get('/{id}/profitability', [MenuItemController::class, 'profitability']);
         Route::post('/{id}/toggle-availability', [MenuItemController::class, 'toggleAvailability']);
     });
+
+    // Recipe Management Routes (Phase 2)
+    Route::prefix('recipes')->group(function () {
+        Route::get('/', [RecipeController::class, 'index']);
+        Route::post('/', [RecipeController::class, 'store']);
+        Route::get('/{id}', [RecipeController::class, 'show']);
+        Route::put('/{id}', [RecipeController::class, 'update']);
+        Route::delete('/{id}', [RecipeController::class, 'destroy']);
+        Route::post('/{id}/recalculate-cost', [RecipeController::class, 'recalculateCost']);
+        Route::post('/{id}/clone', [RecipeController::class, 'clone']);
+        Route::post('/{id}/profitability', [RecipeController::class, 'calculateProfitability']);
+        Route::post('/{id}/ingredients', [RecipeController::class, 'addIngredient']);
+        Route::put('/{recipeId}/ingredients/{ingredientId}', [RecipeController::class, 'updateIngredient']);
+        Route::delete('/{recipeId}/ingredients/{ingredientId}', [RecipeController::class, 'removeIngredient']);
+    });
+    Route::post('/recipes-recalculate-all', [RecipeController::class, 'recalculateAllCosts']);
 
     // Unit Conversions (Phase 3)
     Route::prefix('unit-conversions')->group(function () {

@@ -26,7 +26,7 @@ class MenuCategoryController extends BaseController
     {
         $menuId = $request->query('menu_id');
 
-        $query = MenuCategory::with('items');
+        $query = MenuCategory::with(['items', 'menu']);
 
         if ($menuId) {
             $query->where('menu_id', $menuId);
