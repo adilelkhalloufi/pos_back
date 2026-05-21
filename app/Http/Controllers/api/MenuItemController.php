@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Resources\POSResource;
+use App\Http\Resources\MenuItemResource;
 use App\Services\Menu\MenuService;
 use Illuminate\Http\Request;
 use Exception;
@@ -48,7 +48,7 @@ class MenuItemController extends BaseController
             $validated['store_id'] = $storeId;
             $item = $this->menuService->createMenuItem($validated);
 
-            return response()->json(new POSResource($item), 201);
+            return response()->json(new MenuItemResource($item), 201);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to create menu item',
@@ -65,7 +65,7 @@ class MenuItemController extends BaseController
         try {
             $item = \App\Models\MenuItem::with(['recipe', 'category', 'store'])->findOrFail($id);
 
-            return response()->json(new POSResource($item), 200);
+            return response()->json(new MenuItemResource($item), 200);
         } catch (Exception $e) {
             return response()->json(['error' => 'Menu item not found'], 404);
         }
@@ -93,7 +93,7 @@ class MenuItemController extends BaseController
         try {
             $item = $this->menuService->updateMenuItem($id, $validated);
 
-            return response()->json(new POSResource($item), 200);
+            return response()->json(new MenuItemResource($item), 200);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to update menu item',
@@ -148,7 +148,7 @@ class MenuItemController extends BaseController
         try {
             $item = $this->menuService->toggleItemAvailability($id, $validated['is_available']);
 
-            return response()->json(new POSResource($item), 200);
+            return response()->json(new MenuItemResource($item), 200);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to toggle availability',
@@ -171,6 +171,6 @@ class MenuItemController extends BaseController
         $orderBy = $request->query('order_by', 'profit'); // 'profit' or 'margin_percentage'
         $items = $this->menuService->getItemsByProfitability($storeId, $orderBy);
 
-        return response()->json(POSResource::collection($items), 200);
+        return response()->json(MenuItemResource::collection($items), 200);
     }
 }

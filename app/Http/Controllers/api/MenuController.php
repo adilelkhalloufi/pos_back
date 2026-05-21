@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Resources\POSResource;
+use App\Http\Resources\MenuResource;
 use App\Models\Menu;
 use App\Services\Menu\MenuService;
 use Illuminate\Http\Request;
@@ -33,7 +33,7 @@ class MenuController extends BaseController
         $activeOnly = $request->query('active_only', false);
         $menus = $this->menuService->getMenusForStore($storeId, $activeOnly);
 
-        return response()->json(POSResource::collection($menus), 200);
+        return response()->json(MenuResource::collection($menus), 200);
     }
 
     /**
@@ -49,7 +49,7 @@ class MenuController extends BaseController
 
         $menus = $this->menuService->getCurrentlyAvailableMenus($storeId);
 
-        return response()->json(POSResource::collection($menus), 200);
+        return response()->json(MenuResource::collection($menus), 200);
     }
 
     /**
@@ -77,7 +77,7 @@ class MenuController extends BaseController
             $validated['store_id'] = $storeId;
             $menu = $this->menuService->createMenu($validated);
 
-            return response()->json(new POSResource($menu), 201);
+            return response()->json(new MenuResource($menu), 201);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to create menu',
@@ -95,7 +95,7 @@ class MenuController extends BaseController
             $activeOnly = $request->query('active_only', false);
             $menu = $this->menuService->getMenuWithItems($id, $activeOnly);
 
-            return response()->json(new POSResource($menu), 200);
+            return response()->json(new MenuResource($menu), 200);
         } catch (Exception $e) {
             return response()->json(['error' => 'Menu not found'], 404);
         }
@@ -119,7 +119,7 @@ class MenuController extends BaseController
         try {
             $menu = $this->menuService->updateMenu($id, $validated);
 
-            return response()->json(new POSResource($menu), 200);
+            return response()->json(new MenuResource($menu), 200);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to update menu',

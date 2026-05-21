@@ -169,7 +169,9 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     });
 
     Route::prefix('menu-categories')->group(function () {
+        Route::get('/', [MenuCategoryController::class, 'index']);
         Route::post('/', [MenuCategoryController::class, 'store']);
+        Route::get('/{id}', [MenuCategoryController::class, 'show']);
         Route::put('/{id}', [MenuCategoryController::class, 'update']);
         Route::delete('/{id}', [MenuCategoryController::class, 'destroy']);
     });
