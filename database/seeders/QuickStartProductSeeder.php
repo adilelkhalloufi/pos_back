@@ -2,10 +2,16 @@
 
 namespace Database\Seeders;
 
+use App\Enums\EnumOrderStatue;
 use App\Models\Category;
+use App\Models\ModePayemnt;
+use App\Models\OrderPurchase;
+use App\Models\OrderPurchaseItems;
 use App\Models\Product;
 use App\Models\ProductBarcode;
 use App\Models\Store;
+use App\Models\StoreProducts;
+use App\Models\Suppliers;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +70,7 @@ class QuickStartProductSeeder extends Seeder
                 'reference' => 'REF-002',
                 'description' => 'Long-grain white rice',
                 'category' => 'Grains',
-                'unit_symbol' => 'g',
+                'unit_symbol' => 'kg',
                 'price' => 2.50,
                 'price_buy' => 1.50,
                 'price_sell_1' => 2.50,
@@ -79,7 +85,7 @@ class QuickStartProductSeeder extends Seeder
                 'reference' => 'REF-003',
                 'description' => 'Fresh lettuce for salads',
                 'category' => 'Vegetables',
-                'unit_symbol' => 'pc',
+                'unit_symbol' => 'kg',
                 'price' => 1.20,
                 'price_buy' => 0.80,
                 'price_sell_1' => 1.20,
@@ -94,7 +100,7 @@ class QuickStartProductSeeder extends Seeder
                 'reference' => 'REF-004',
                 'description' => 'Ripe tomatoes for cooking',
                 'category' => 'Vegetables',
-                'unit_symbol' => 'pc',
+                'unit_symbol' => 'kg',
                 'price' => 1.80,
                 'price_buy' => 1.10,
                 'price_sell_1' => 1.80,
@@ -143,6 +149,15 @@ class QuickStartProductSeeder extends Seeder
                 ]
             );
 
+            ProductBarcode::query()->where('product_id', $product->id)->delete();
+            foreach ($item['barcodes'] as $index => $barcode) {
+                ProductBarcode::create([
+                    'product_id' => $product->id,
+                    'barcode' => $barcode,
+                    'is_primary' => $index === 0,
+                ]);
+            }
+
             if ($store) {
                 DB::table('store_products')->updateOrInsert(
                     [
@@ -157,6 +172,63 @@ class QuickStartProductSeeder extends Seeder
                         'updated_at' => now(),
                     ]
                 );
+            }
+        }
+
+        if ($store && $user) {
+            $paymentMethod = ModePayemnt::query()->first();
+
+            $supplier = Suppliers::updateOrCreate(
+                ['company_name' => 'Quick Start Supplier'],
+                [
+                    'first_name' => 'Quick',
+                    'last_name' => 'Supplier',
+                    'email' => 'supplier@quickstart.local',
+                    'phone' => '0600000000',
+                    'address' => 'Supply Street 1',
+                    'city' => 'Casablanca',
+                    'country' => 'Morocco',
+                    'zip_code' => '20000',
+                    'user_id' => $user->id,
+                    'store_id' => $store->id,
+                ]
+            );
+
+            $purchase = OrderPurchase::create([
+                'order_number' => 'Brouillon',
+                'reference' => 'QS-PO-001',
+                'status' => EnumOrderStatue::PENDING->value,
+                'supplier_id' => $supplier->id,
+                'paid_method_id' => $paymentMethod?->id,
+                'user_id' => $user->id,
+                'store_id' => $store->id,
+                'public_note' => 'Quick start purchase order',
+                'private_note' => 'Seeded purchase order for initial stock',
+            ]);
+
+            $purchaseItems = [
+                ['reference' => 'REF-001', 'quantity' => 50, 'price' => 10.00],
+                ['reference' => 'REF-002', 'quantity' => 10, 'price' => 2.50],
+                ['reference' => 'REF-003', 'quantity' => 2, 'price' => 1.20],
+                ['reference' => 'REF-004', 'quantity' => 2, 'price' => 1.80],
+                ['reference' => 'REF-005', 'quantity' => 2, 'price' => 15.00],
+            ];
+
+            foreach ($purchaseItems as $item) {
+                $product = Product::query()->where('reference', $item['reference'])->first();
+                if (!$product) {
+                    continue;
+                }
+
+                OrderPurchaseItems::create([
+                    'order_id' => $purchase->id,
+                    'product_id' => $product->id,
+                    'store_id' => $store->id,
+                    'name' => $product->name,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'total' => $item['quantity'] * $item['price'],
+                ]);
             }
         }
     }

@@ -64,6 +64,8 @@ class DatabaseSeeder extends Seeder
         // $this->call(SupplierSeeder::class);
         $this->call(CategorySeeds::class);
         $this->call(QuickStartProductSeeder::class);
+        $this->call(MenuSeeder::class);
+        $this->call(MenuCategorySeeder::class);
         // $this->call(TestPurchaseDataSeeder::class);
     }
 }
