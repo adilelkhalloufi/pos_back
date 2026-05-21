@@ -24,6 +24,7 @@ class StoreProductResource extends JsonResource
             'id_store_product' => $this->id, // kept for backward compatibility
             StoreProducts::COL_STORE_ID => $this->{StoreProducts::COL_STORE_ID},
             StoreProducts::COL_PRODUCT_ID => $this->{StoreProducts::COL_PRODUCT_ID},
+            
             StoreProducts::COL_PRICE => (float) $this->{StoreProducts::COL_PRICE},
             StoreProducts::COL_COST => (float) $this->{StoreProducts::COL_COST},
             StoreProducts::COL_STOCK => (float) $this->{StoreProducts::COL_STOCK},
@@ -46,20 +47,34 @@ class StoreProductResource extends JsonResource
 
             Product::COL_IMAGE => $this->product->image ? asset('storage/' . $this->product->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
-            Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->product->id, // this for order items
             Product::COL_CATEGORY_ID => $this->product->category_id,
+            Product::COL_UNIT_ID => $this->product->unit_id,
             AUTOCOMPLETE::VALUE->value => $this->product->id,
 
-
             'qte' => 1, // this for front end to calcluat the product selected
-            'barcodes' => $this->whenLoaded('product', function () {
-                return $this->product->barcodes->pluck('barcode')->toArray();
-            }, []),
-            'category' => CategoryResource::make($this->product->category),
+            'barcodes' => $this->when(
+                $this->product->relationLoaded('barcodes'),
+                fn () => $this->product->barcodes->pluck('barcode')->toArray(),
+                []
+            ),
+            'category' => $this->when(
+                $this->product->relationLoaded('category'),
+                fn () => CategoryResource::make($this->product->category),
+                null
+            ),
+            'unit' => $this->when(
+                $this->product->relationLoaded('unit'),
+                fn () => [
+                    'id' => $this->product->unit?->id,
+                    'name' => $this->product->unit?->name,
+                    'symbol' => $this->product->unit?->symbol,
+                ],
+                null
+            ),
             'sales' => $this->whenLoaded('product.sales') ?? [],
             'purchases' => $this->whenLoaded('product.purchases') ?? [],
-            'store' => $this->whenLoaded('product.store') ?? null,
+            'store' => StoreResource::make($this->whenLoaded('store')),
 
         ];
     }

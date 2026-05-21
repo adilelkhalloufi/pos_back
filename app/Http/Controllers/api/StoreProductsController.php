@@ -26,7 +26,7 @@ class StoreProductsController extends BaseController
     {
         $storeId = $this->storeId();
 
-        $relations = ['product.category', 'product.barcodes'];
+        $relations = ['product.category', 'product.barcodes', 'product.unit'];
         $products = $this->storeProductService->getStoreProducts($storeId, $relations);
 
         return response()->json(StoreProductResource::collection($products), Response::HTTP_OK);

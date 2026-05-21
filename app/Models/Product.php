@@ -122,7 +122,7 @@ class Product extends BaseModel
 
     public function unit()
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(Unit::class,self::COL_UNIT_ID, Unit::COL_ID);
     }
 
     public function printProfile()

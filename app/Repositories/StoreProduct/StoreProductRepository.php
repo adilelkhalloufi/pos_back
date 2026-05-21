@@ -56,7 +56,7 @@ class StoreProductRepository extends BaseRepository
     public function getInStockProducts(int $storeId, ?string $search = null)
     {
         $query = $this->getQueryBuilder()
-            ->with(['product.category', 'product.unit', 'store'])
+            ->with(['product.category', 'product.unit', 'product.barcodes', 'store'])
             ->where(StoreProducts::COL_STORE_ID, $storeId)
             ->where(StoreProducts::COL_STOCK, '>', 0);
 
@@ -113,7 +113,7 @@ class StoreProductRepository extends BaseRepository
     public function getLowStockProducts(int $storeId, float $threshold = 10)
     {
         return $this->getQueryBuilder()
-            ->with(['product', 'store'])
+            ->with(['product.category', 'product.unit', 'product.barcodes', 'store'])
             ->where(StoreProducts::COL_STORE_ID, $storeId)
             ->where(StoreProducts::COL_STOCK, '<=', $threshold)
             ->where(StoreProducts::COL_STOCK, '>', 0)
