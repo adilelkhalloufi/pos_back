@@ -11,10 +11,125 @@
 ### ☐ STEP 1: Create Products
 ```http
 POST /api/products
+Content-Type: application/json
+
+{
+  "name": "Chicken Breast",
+  "reference": "REF-001",
+  "description": "Fresh chicken breast for recipes",
+  "category_id": 1,
+  "unit_id": 6,
+  "price": 12.00,
+  "price_buy": 8.00,
+  "price_sell_1": 12.00,
+  "stock_alert": 10,
+  "is_active": true,
+  "archive": false,
+  "codebar": "1234567890123",
+  "barcodes": ["1234567890123", "9876543210987"]
+}
 ```
+
 **Create:** Chicken Breast, Rice, Lettuce, Tomatoes, Olive Oil
 
+**Example payloads for the remaining products:**
+
+```http
+POST /api/products
+Content-Type: application/json
+
+{
+  "name": "Rice",
+  "reference": "REF-002",
+  "description": "Long-grain white rice",
+  "category_id": 1,
+  "unit_id": 1,
+  "price": 2.50,
+  "price_buy": 1.50,
+  "price_sell_1": 2.50,
+  "stock_alert": 20,
+  "is_active": true,
+  "archive": false,
+  "codebar": "2234567890123",
+  "barcodes": ["2234567890123"]
+}
+```
+
+```http
+POST /api/products
+Content-Type: application/json
+
+{
+  "name": "Lettuce",
+  "reference": "REF-003",
+  "description": "Fresh lettuce for salads",
+  "category_id": 2,
+  "unit_id": 2,
+  "price": 1.20,
+  "price_buy": 0.80,
+  "price_sell_1": 1.20,
+  "stock_alert": 15,
+  "is_active": true,
+  "archive": false,
+  "codebar": "3234567890123",
+  "barcodes": ["3234567890123"]
+}
+```
+
+```http
+POST /api/products
+Content-Type: application/json
+
+{
+  "name": "Tomatoes",
+  "reference": "REF-004",
+  "description": "Ripe tomatoes for cooking",
+  "category_id": 2,
+  "unit_id": 2,
+  "price": 1.80,
+  "price_buy": 1.10,
+  "price_sell_1": 1.80,
+  "stock_alert": 15,
+  "is_active": true,
+  "archive": false,
+  "codebar": "4234567890123",
+  "barcodes": ["4234567890123"]
+}
+```
+
+```http
+POST /api/products
+Content-Type: application/json
+
+{
+  "name": "Olive Oil",
+  "reference": "REF-005",
+  "description": "Extra virgin olive oil",
+  "category_id": 3,
+  "unit_id": 3,
+  "price": 15.00,
+  "price_buy": 10.00,
+  "price_sell_1": 15.00,
+  "stock_alert": 5,
+  "is_active": true,
+  "archive": false,
+  "codebar": "5234567890123",
+  "barcodes": ["5234567890123"]
+}
+```
+
 **Test:** ✓ Products appear in list
+
+**Completion details:**
+- Answer with the exact product fields you sent, including `name`, `reference`, `category_id`, `unit_id`, `price`, `price_buy`, and `stock_alert`.
+- Verify each created product is visible in `GET /api/products`.
+- Confirm the returned product has:
+  - `id` assigned
+  - correct `reference`
+  - correct `category_id` and `unit_id`
+  - `price`, `price_buy`, and `price_sell_1`
+  - `barcodes` or `codebar` preserved if provided
+- If the product list shows your new items, the step is complete.
 
 ---
 
