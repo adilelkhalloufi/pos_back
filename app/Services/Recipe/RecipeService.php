@@ -238,14 +238,12 @@ class RecipeService
      * @param bool $activeOnly
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getStoreRecipes(int $storeId, bool $activeOnly = true)
+    public function getStoreRecipes(int $storeId)
     {
         $query = Recipe::with(['ingredients.product', 'yieldUnit'])
             ->where('store_id', $storeId);
 
-        if ($activeOnly) {
-            $query->where('is_active', true);
-        }
+ 
 
         return $query->orderBy('name')->get();
     }

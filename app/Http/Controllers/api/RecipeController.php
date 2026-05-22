@@ -26,14 +26,11 @@ class RecipeController extends BaseController
     public function index(Request $request)
     {
         try {
-            $storeId = $request->header('X-Store-ID');
-            $activeOnly = $request->query('active_only', true);
+            $storeId = $this->storeId();
+ 
+         
 
-            if (!$storeId) {
-                return response()->json(['error' => 'Store ID is required'], 400);
-            }
-
-            $recipes = $this->recipeService->getStoreRecipes($storeId, $activeOnly);
+            $recipes = $this->recipeService->getStoreRecipes($storeId);
 
             return response()->json(RecipeResource::collection($recipes), 200);
         } catch (Exception $e) {
@@ -59,7 +56,6 @@ class RecipeController extends BaseController
             'cooking_time_minutes' => 'nullable|integer|min:0',
             'skill_level' => 'nullable|string|in:beginner,intermediate,advanced,expert',
             'is_active' => 'boolean',
-            'store_id' => 'required|integer|exists:stores,id',
 
             // Ingredients array
             'ingredients' => 'nullable|array',
@@ -70,8 +66,11 @@ class RecipeController extends BaseController
             'ingredients.*.preparation_note' => 'nullable|string|max:255',
             'ingredients.*.is_optional' => 'nullable|boolean',
         ]);
-
+       
         try {
+            $storeId = $this->storeId();
+            $validated['store_id'] = $storeId;
+            
             $validated['user_id'] = Auth::id();
 
             $ingredients = $validated['ingredients'] ?? [];

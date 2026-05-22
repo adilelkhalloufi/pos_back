@@ -164,6 +164,12 @@ POST /api/order-purchases
 
 ### ☐ STEP 4: Create Recipe
 
+**How to add a recipe:**
+- Use `POST /api/recipes`
+- Include `store_id` or send `X-Store-ID: 1`
+- Add recipe ingredients in the `ingredients` array
+- Each ingredient must include `product_id`, `quantity`, `unit_id`, and optional `waste_percentage`
+
 ```http
 POST /api/recipes
 Content-Type: application/json
@@ -220,7 +226,7 @@ X-Store-ID: 1
 }
 ```
 
-**Recipe:** "Grilled Chicken Salad"
+**Recipe example:** "Grilled Chicken Salad"
 
 - 250g Chicken (10% waste)
 - 150g Rice
@@ -258,6 +264,22 @@ Content-Type: application/json
 }
 
 # Recalculate recipe cost (after product price changes)
+POST /api/recipes/{id}/recalculate-cost
+
+# Add an ingredient to an existing recipe
+POST /api/recipes/{id}/ingredients
+Content-Type: application/json
+{
+  "product_id": 2,
+  "quantity": 0.10,
+  "unit_id": 1,
+  "waste_percentage": 0,
+  "preparation_note": "Extra rice"
+}
+
+# Recalculate all recipe costs
+POST /api/recipes-recalculate-all
+```
 POST /api/recipes/{id}/recalculate-cost
 
 # Calculate profitability with a selling price
