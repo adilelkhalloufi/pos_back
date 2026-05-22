@@ -91,14 +91,17 @@ class MenuService
     }
 
     /**
-     * Create a menu category
+     * Create a menu category with optional menu items
      * 
      * @param array $categoryData
+     * @param array $items - Optional array of menu items to create
      * @return MenuCategory
      * @throws Exception
      */
-    public function createCategory(array $categoryData): MenuCategory
+    public function createCategory(array $categoryData, array $items = []): MenuCategory
     {
+        DB::beginTransaction();
+
         try {
             $category = MenuCategory::create([
                 'menu_id' => $categoryData['menu_id'],
@@ -108,8 +111,19 @@ class MenuService
                 'is_active' => $categoryData['is_active'] ?? true,
             ]);
 
-            return $category->fresh();
+            // Create menu items if provided
+            if (!empty($items)) {
+                foreach ($items as $itemData) {
+                    $itemData['menu_category_id'] = $category->id;
+                    $this->createMenuItem($itemData);
+                }
+            }
+
+            DB::commit();
+
+            return $category->fresh(['items.recipe']);
         } catch (Exception $e) {
+            DB::rollBack();
             throw $e;
         }
     }

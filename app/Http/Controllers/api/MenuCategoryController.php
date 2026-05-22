@@ -52,20 +52,48 @@ class MenuCategoryController extends BaseController
     }
 
     /**
-     * Store a newly created category
+     * Store a newly created category with optional menu items
      */
     public function store(Request $request)
     {
+        $storeId = $this->storeId();
+
+        if (!$storeId) {
+            return response()->json(['error' => 'No store found'], 404);
+        }
+
         $validated = $request->validate([
             'menu_id' => 'required|exists:menus,id',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
             'display_order' => 'integer',
             'is_active' => 'boolean',
+
+            // Optional menu items array
+            'items' => 'nullable|array',
+            'items.*.name' => 'required|string|max:100',
+            'items.*.description' => 'nullable|string',
+            'items.*.image' => 'nullable|string',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.cost' => 'nullable|numeric|min:0',
+            'items.*.is_active' => 'boolean',
+            'items.*.is_available' => 'boolean',
+            'items.*.preparation_time_minutes' => 'nullable|integer|min:0',
+            'items.*.item_type' => 'required|in:recipe,combo,simple',
+            'items.*.recipe_id' => 'nullable|exists:recipes,id',
+            'items.*.display_order' => 'integer',
         ]);
 
         try {
-            $category = $this->menuService->createCategory($validated);
+            $items = $validated['items'] ?? [];
+            unset($validated['items']);
+
+            // Add store_id to each item
+            foreach ($items as &$item) {
+                $item['store_id'] = $storeId;
+            }
+
+            $category = $this->menuService->createCategory($validated, $items);
 
             return response()->json(new MenuCategoryResource($category), 201);
         } catch (Exception $e) {
