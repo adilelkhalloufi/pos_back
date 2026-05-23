@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::put('/orders/{id}/cancel', [OrderSaleController::class, 'cancel']);
     Route::post('/orders/{id}/payment', [OrderSaleController::class, 'addPaymentToOrder']);
     Route::post('/orders/{id}/invoice', [OrderSaleController::class, 'updateToInvoice']);
+    Route::post('/restaurant-orders', [OrderSaleController::class, 'createRestaurantOrder']); // Restaurant-specific order creation
     Route::resource('/orders', OrderSaleController::class);
 
     Route::resource('/categories', CategoryController::class);
@@ -178,6 +179,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     });
 
     Route::prefix('menu-items')->group(function () {
+        Route::get('/', [MenuItemController::class, 'index']);
         Route::get('/by-profitability', [MenuItemController::class, 'byProfitability']);
         Route::post('/', [MenuItemController::class, 'store']);
         Route::get('/{id}', [MenuItemController::class, 'show']);

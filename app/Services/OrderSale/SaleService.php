@@ -272,4 +272,98 @@ class SaleService
         // Check stock alerts only for these specific products
         $this->alertService->generateProductStockAlertsForProducts($productIds, $storeId);
     }
+
+    /**
+     * Create a restaurant order with menu items
+     * This is specifically for restaurant/menu-based sales (not direct product sales)
+     * 
+     * @param array $attributes - Must include 'menu_items' array with menu_item_id and quantity
+     * @return OrderSale|null
+     * @throws \Exception
+     */
+    public function createRestaurantOrder(array $attributes): ?OrderSale
+    {
+        DB::beginTransaction();
+        try {
+            $storeId = currentStoreId();
+
+            // Get count of orders created today
+            $todayOrderCount = OrderSale::whereDate('created_at', today())->count();
+            $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
+
+            // Calculate total from menu items
+            $totalCommand = 0;
+            $menuItemsData = [];
+
+            foreach ($attributes['menu_items'] ?? [] as $menuItemRequest) {
+                $menuItem = \App\Models\MenuItem::with(['recipe', 'product'])->findOrFail($menuItemRequest['menu_item_id']);
+
+                if (!$menuItem->is_active || !$menuItem->is_available) {
+                    throw new \Exception("Menu item '{$menuItem->name}' is not available");
+                }
+
+                $quantity = $menuItemRequest['quantity'] ?? 1;
+                $itemTotal = $menuItem->price * $quantity;
+                $totalCommand += $itemTotal;
+
+                $menuItemsData[] = [
+                    'menu_item' => $menuItem,
+                    'quantity' => $quantity,
+                    'price' => $menuItem->price,
+                    'cost' => $menuItem->cost,
+                    'total' => $itemTotal,
+                ];
+            }
+
+            // Calculate Rest to Pay
+            $discount = $attributes[OrderSale::COL_DISCOUNT] ?? 0;
+            $advance = $attributes[OrderSale::COL_ADVANCE] ?? 0;
+            $attributes[OrderSale::COL_TOTAL_COMMAND] = $totalCommand;
+            $attributes[OrderSale::COL_REST_A_PAY] = max(0, $totalCommand - $advance - $discount);
+            $attributes[OrderSale::COL_TOTAL_PAYMENT] = $advance;
+
+            // Determine state of order
+            $attributes[OrderSale::COL_STATUS] = $attributes[OrderSale::COL_REST_A_PAY] == 0
+                ? EnumPayementStatue::PAID->value
+                : ($advance > 0 ? EnumPayementStatue::AVANCE->value : EnumPayementStatue::UNPAID->value);
+
+            // Create order
+            $sale = OrderSale::create([
+                OrderSale::COL_ORDER_NUMBER => $orderNumber,
+                OrderSale::COL_ADVANCE => $attributes[OrderSale::COL_ADVANCE] ?? 0,
+                OrderSale::COL_DISCOUNT => $attributes[OrderSale::COL_DISCOUNT] ?? 0,
+                OrderSale::COL_TOTAL_COMMAND => $attributes[OrderSale::COL_TOTAL_COMMAND],
+                OrderSale::COL_TOTAL_PAYMENT => $attributes[OrderSale::COL_TOTAL_PAYMENT] ?? 0,
+                OrderSale::COL_REST_A_PAY => $attributes[OrderSale::COL_REST_A_PAY],
+                OrderSale::COL_STATUS => $attributes[OrderSale::COL_STATUS],
+                OrderSale::COL_IS_INVOICE => true,
+                OrderSale::COL_STORE_ID => $storeId,
+                OrderSale::COL_USER_ID => auth()->id(),
+                OrderSale::COL_NOTE => $attributes['note'] ?? null,
+                OrderSale::COL_INVOICE_TOTAL => $attributes[OrderSale::COL_TOTAL_COMMAND],
+                OrderSale::COL_CUSTOMER_ID => $attributes['customer_id'] ?? null,
+            ]);
+
+            // Create order items for menu items
+            foreach ($menuItemsData as $itemData) {
+                \App\Models\OrderItems::create([
+                    \App\Models\OrderItems::COL_NAME => $itemData['menu_item']->name,
+                    \App\Models\OrderItems::COL_ORDER_ID => $sale->getId(),
+                    \App\Models\OrderItems::COL_STORE_ID => $storeId,
+                    \App\Models\OrderItems::COL_PRODUCT_ID => $itemData['menu_item']->id,
+                    \App\Models\OrderItems::COL_PRODUCT_TYPE => \App\Models\MenuItem::class,
+                    \App\Models\OrderItems::COL_PRICE => $itemData['price'],
+                    \App\Models\OrderItems::COL_QTE => $itemData['quantity'],
+                    \App\Models\OrderItems::COL_TOTAL => $itemData['total'],
+                    \App\Models\OrderItems::COL_INVOICE_PRICE => $itemData['price'],
+                ]);
+            }
+
+            DB::commit();
+            return $sale->load(['orderItems', 'user', 'customer']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }

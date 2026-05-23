@@ -28,6 +28,7 @@ class MenuItemResource extends JsonResource
             MenuItem::COL_PREPARATION_TIME_MINUTES => $this->preparation_time_minutes,
             MenuItem::COL_ITEM_TYPE => $this->item_type,
             MenuItem::COL_RECIPE_ID => $this->recipe_id,
+            MenuItem::COL_PRODUCT_ID => $this->product_id,
             MenuItem::COL_STORE_ID => $this->store_id,
             MenuItem::COL_DISPLAY_ORDER => $this->display_order,
             'created_at' => $this->created_at,
@@ -46,6 +47,7 @@ class MenuItemResource extends JsonResource
             // Conditionally loaded relationships
             'category' => new MenuCategoryResource($this->whenLoaded('category')),
             'recipe' => $this->whenLoaded('recipe'),
+            'product' => new ProductResource($this->whenLoaded('product')),
             'store' => new StoreResource($this->whenLoaded('store')),
         ];
     }

@@ -2,7 +2,20 @@
 
 ## From Product to Sale - Quick Reference
 
-**Date:** May 20, 2026
+**Date:** May 23, 2026  
+**Latest Update:** Added product-based menu items support
+
+---
+
+## 🚀 Quick Setup
+
+**Before starting, run the latest migration:**
+
+```bash
+php artisan migrate
+```
+
+This adds support for direct product linking to menu items.
 
 ---
 
@@ -165,6 +178,7 @@ POST /api/order-purchases
 ### ☐ STEP 4: Create Recipe
 
 **How to add a recipe:**
+
 - Use `POST /api/recipes`
 - Include `store_id` or send `X-Store-ID: 1`
 - Add recipe ingredients in the `ingredients` array
@@ -239,11 +253,13 @@ X-Store-ID: 1
 **Important Notes:**
 
 - Create Recipe BEFORE Menu Item (recipe must exist to link)
+- **NEW:** You can also link menu items directly to products (no recipe needed)
 - `product_id` refers to products created in Step 1
 - `unit_id` refers to units from the seeder (1=KG, 2=piece, 3=liter, etc.)
 - `yield_unit_id` is the unit for the final recipe output
 - Costs are calculated automatically based on current product prices and waste percentages
 - The effective quantity includes waste: quantity × (1 + waste_percentage/100)
+- **NEW:** Use `item_type='product'` for direct product sales (drinks, packaged items)
 
 **Additional Recipe Endpoints:**
 
@@ -280,48 +296,56 @@ Content-Type: application/json
 # Recalculate all recipe costs
 POST /api/recipes-recalculate-all
 ```
+
 POST /api/recipes/{id}/recalculate-cost
 
 # Calculate profitability with a selling price
+
 POST /api/recipes/{id}/profitability
 Content-Type: application/json
 {
-  "selling_price": 12.99
+"selling_price": 12.99
 }
 
 # Clone a recipe
+
 POST /api/recipes/{id}/clone
 Content-Type: application/json
 {
-  "name": "Grilled Chicken Salad V2"
+"name": "Grilled Chicken Salad V2"
 }
 
 # Add ingredient to existing recipe
+
 POST /api/recipes/{id}/ingredients
 Content-Type: application/json
 {
-  "product_id": 6,
-  "quantity": 0.05,
-  "unit_id": 1,
-  "waste_percentage": 5,
-  "preparation_note": "Optional topping"
+"product_id": 6,
+"quantity": 0.05,
+"unit_id": 1,
+"waste_percentage": 5,
+"preparation_note": "Optional topping"
 }
 
 # Update ingredient
+
 PUT /api/recipes/{recipeId}/ingredients/{ingredientId}
 Content-Type: application/json
 {
-  "quantity": 0.3,
-  "waste_percentage": 12
+"quantity": 0.3,
+"waste_percentage": 12
 }
 
 # Remove ingredient
+
 DELETE /api/recipes/{recipeId}/ingredients/{ingredientId}
 
 # Recalculate ALL recipes in store (after bulk price updates)
+
 POST /api/recipes-recalculate-all
 X-Store-ID: 1
-```
+
+````
 
 ---
 
@@ -329,7 +353,7 @@ X-Store-ID: 1
 
 ```http
 POST /api/menus
-```
+````
 
 **Menu:** "Lunch Menu" (11am-3pm)
 
@@ -351,41 +375,156 @@ POST /api/menu-categories
 
 ### ☐ STEP 7: Create Menu Item
 
+There are **3 ways** to create menu items:
+
+#### Option A: Recipe-Based Menu Item (Prepared Dishes)
+
 ```http
 POST /api/menu-items
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "menu_category_id": 1,
+  "name": "Grilled Chicken Salad",
+  "description": "Fresh salad with grilled chicken",
+  "price": 12.99,
+  "item_type": "recipe",
+  "recipe_id": 1,
+  "is_active": true,
+  "is_available": true
+}
 ```
-
-**Item:** "Grilled Chicken Salad"
-
-- Price: $12.99
-- Linked to Recipe (ID: 1)
 
 **Test:**
 
 - ✓ Cost = $3.98 (from recipe)
 - ✓ Food Cost % = 30.6%
 - ✓ Profit = $9.01
+- ✓ When sold, deducts all recipe ingredients
+
+#### Option B: Product-Based Menu Item (Direct Product Sales) ✨ NEW
+
+```http
+POST /api/menu-items
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "menu_category_id": 2,
+  "name": "Coca Cola",
+  "description": "Refreshing soda",
+  "price": 3.00,
+  "item_type": "product",
+  "product_id": 2,
+  "is_active": true,
+  "is_available": true
+}
+```
+
+**Test:**
+
+- ✓ Cost = Product's purchase price (auto-calculated)
+- ✓ When sold, deducts single product stock
+- ✓ No recipe required!
+
+**Use product-based menu items for:**
+
+- Drinks (bottled/canned)
+- Packaged items
+- Products sold as-is without preparation
+
+#### Option C: Simple Menu Item (Manual Cost)
+
+```http
+POST /api/menu-items
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "menu_category_id": 3,
+  "name": "Delivery Fee",
+  "price": 5.00,
+  "cost": 2.00,
+  "item_type": "simple",
+  "is_active": true
+}
+```
+
+**Test:**
+
+- ✓ Cost = Manual entry
+- ✓ No automatic stock deduction
 
 ---
 
 ### ☐ STEP 8: Create Sale (POS)
 
+#### Option A: Regular Product Sale (Existing)
+
 ```http
-POST /api/order-sales
+POST /api/orders
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "items": [
+    {
+      "product_id": 1,
+      "name": "Chicken Breast",
+      "price": 10.00,
+      "qte": 2
+    }
+  ],
+  "discount": 0,
+  "advance": 20.00
+}
 ```
 
-**Sale:** 2× Grilled Chicken Salad = $25.98
+#### Option B: Restaurant Order (Menu Items) ✨ NEW
+
+```http
+POST /api/restaurant-orders
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "menu_items": [
+    {
+      "menu_item_id": 1,
+      "quantity": 2
+    },
+    {
+      "menu_item_id": 2,
+      "quantity": 1
+    }
+  ],
+  "customer_id": 5,
+  "discount": 2.00,
+  "advance": 20.00,
+  "note": "Table 8"
+}
+```
+
+**Sale Example:** 2× Grilled Chicken Salad = $25.98
 
 **Test - CRITICAL!**
 
 - ✓ Order created
-- ✓ Chicken stock: 50.00 → 49.45 KG ⚡
+- ✓ Chicken stock: 50.00 → 49.45 KG ⚡ (recipe-based item)
 - ✓ Rice stock: 100.00 → 99.70 KG ⚡
 - ✓ Lettuce stock: 20.00 → 19.77 KG ⚡
 - ✓ Tomatoes stock: 30.00 → 29.895 KG ⚡
 - ✓ Oil stock: 10.00 → 9.96 L ⚡
-- ✓ 5 stock movements created
-- ✓ Sale profit = $18.02
+- ✓ Coca Cola stock: 100 → 99 pcs ⚡ (product-based item)
+- ✓ Stock movements created automatically
+- ✓ Sale profit calculated correctly
+
+**Key Difference:**
+
+- **Regular Order**: Uses `product_id` from products table
+- **Restaurant Order**: Uses `menu_item_id` from menu_items table
+- Stock deduction happens automatically for both!
 
 ---
 
@@ -444,18 +583,20 @@ POST /api/order-purchases
 
 1. **Products:** Stock quantities visible
 2. **Recipes:** Total cost auto-calculated
-3. **Menu Items:** Cost = Recipe cost
+3. **Menu Items:** Cost auto-calculated from recipe OR product ✨
 4. **Sales:** Stock automatically deducts
 5. **Costs:** Update automatically when prices change
 6. **Profitability:** Calculated in real-time
+7. **Restaurant Orders:** Menu items sold with automatic stock deduction ✨
 
 ### ❌ Red Flags (Something's Wrong):
 
 1. Stock doesn't decrease after sale
 2. Recipe cost is $0.00
-3. Menu item cost ≠ recipe cost
-4. No stock movements created
-5. Costs don't update after new purchase
+3. Menu item cost ≠ recipe cost (for recipe-based items)
+4. Menu item cost ≠ product cost (for product-based items) ✨
+5. No stock movements created
+6. Costs don't update after new purchase
 
 ---
 
@@ -525,6 +666,30 @@ POST /api/stock-deductions/preview
 }
 ```
 
+### View Menu Item Details
+
+```http
+GET /api/menu-items/{id}
+```
+
+Returns menu item with cost, profit margin, and linked recipe/product.
+
+### Create Restaurant Order ✨ NEW
+
+```http
+POST /api/restaurant-orders
+Content-Type: application/json
+X-Store-ID: 1
+
+{
+  "menu_items": [
+    {"menu_item_id": 1, "quantity": 2}
+  ],
+  "discount": 0,
+  "advance": 20
+}
+```
+
 ### Force Recipe Cost Recalculation
 
 ```http
@@ -533,18 +698,79 @@ POST /api/recipes/{id}/recalculate-cost
 
 ---
 
+## 🍽️ Menu Item Types Reference
+
+### Understanding item_type Options
+
+| Type             | Link           | Cost Source            | Stock Deduction         | Use Case                        |
+| ---------------- | -------------- | ---------------------- | ----------------------- | ------------------------------- |
+| **`recipe`**     | Recipe ID      | Recipe ingredients sum | Deducts all ingredients | Prepared dishes (salad, burger) |
+| **`product`** ✨ | Product ID     | Product purchase price | Deducts single product  | Drinks, packaged items          |
+| **`simple`**     | None           | Manual entry           | No deduction            | Services, fees                  |
+| **`combo`**      | Multiple items | Sum of combo items     | Depends on combo setup  | Meal deals                      |
+
+### When to Use Each Type
+
+**Use `recipe` when:**
+
+- Menu item requires multiple ingredients
+- Need to track ingredient consumption
+- Complex preparation with waste
+
+**Use `product` when:** ✨ NEW
+
+- Selling single products as-is
+- Drinks (bottled, canned)
+- Packaged items sold without preparation
+- 1:1 product-to-menu-item mapping
+
+**Use `simple` when:**
+
+- Service items (delivery fee)
+- No inventory tracking needed
+- Manual cost management required
+
+### Stock Deduction Behavior
+
+```
+Recipe-Based Item (item_type='recipe'):
+   Menu Item → Recipe → Ingredients → Products
+   Stock deducted from ALL ingredient products
+
+Product-Based Item (item_type='product'): ✨ NEW
+   Menu Item → Product
+   Stock deducted from SINGLE product
+
+Simple Item (item_type='simple'):
+   No automatic stock deduction
+```
+
+---
+
 ## 🚀 Ready to Start?
+
+**Before you begin:**
+
+```bash
+php artisan migrate
+```
+
+This adds product-based menu item support.
+
+**Then:**
 
 1. Print this checklist
 2. Follow steps 1-9 in order
 3. Check each test point
 4. Verify all ✓ marks are green
-5. Celebrate when it works! 🎉
+5. Try both recipe-based AND product-based menu items ✨
+6. Celebrate when it works! 🎉
 
 **Estimated Time:** 30-45 minutes for complete workflow
 
 ---
 
 **Document:** Quick Start Checklist  
-**Version:** 1.0  
-**Last Updated:** May 20, 2026
+**Version:** 2.0  
+**Last Updated:** May 23, 2026  
+**Changes:** Added product-based menu items and restaurant order endpoint

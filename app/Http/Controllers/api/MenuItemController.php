@@ -19,6 +19,54 @@ class MenuItemController extends BaseController
     }
 
     /**
+     * Display a listing of menu items
+     */
+    public function index(Request $request)
+    {
+        $storeId = $this->storeId();
+
+        if (!$storeId) {
+            return response()->json(['error' => 'No store found'], 404);
+        }
+
+        try {
+            $query = \App\Models\MenuItem::with(['recipe', 'product', 'category'])
+                ->where('store_id', $storeId);
+
+            // Optional filtering
+            if ($request->has('menu_category_id')) {
+                $query->where('menu_category_id', $request->menu_category_id);
+            }
+
+            if ($request->has('item_type')) {
+                $query->where('item_type', $request->item_type);
+            }
+
+            if ($request->has('is_active')) {
+                $query->where('is_active', $request->boolean('is_active'));
+            }
+
+            if ($request->has('is_available')) {
+                $query->where('is_available', $request->boolean('is_available'));
+            }
+
+            // Ordering
+            $orderBy = $request->query('order_by', 'display_order');
+            $orderDirection = $request->query('order_direction', 'asc');
+            $query->orderBy($orderBy, $orderDirection);
+
+            $items = $query->get();
+
+            return response()->json(MenuItemResource::collection($items), 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch menu items',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created menu item
      */
     public function store(Request $request)
@@ -39,8 +87,9 @@ class MenuItemController extends BaseController
             'is_active' => 'boolean',
             'is_available' => 'boolean',
             'preparation_time_minutes' => 'nullable|integer|min:0',
-            'item_type' => 'required|in:recipe,combo,simple',
+            'item_type' => 'required|in:recipe,combo,simple,product',
             'recipe_id' => 'nullable|exists:recipes,id',
+            'product_id' => 'nullable|exists:products,id',
             'display_order' => 'integer',
         ]);
 
@@ -63,7 +112,7 @@ class MenuItemController extends BaseController
     public function show($id)
     {
         try {
-            $item = \App\Models\MenuItem::with(['recipe', 'category', 'store'])->findOrFail($id);
+            $item = \App\Models\MenuItem::with(['recipe', 'product', 'category', 'store'])->findOrFail($id);
 
             return response()->json(new MenuItemResource($item), 200);
         } catch (Exception $e) {
@@ -85,8 +134,9 @@ class MenuItemController extends BaseController
             'is_active' => 'boolean',
             'is_available' => 'boolean',
             'preparation_time_minutes' => 'nullable|integer|min:0',
-            'item_type' => 'sometimes|required|in:recipe,combo,simple',
+            'item_type' => 'sometimes|required|in:recipe,combo,simple,product',
             'recipe_id' => 'nullable|exists:recipes,id',
+            'product_id' => 'nullable|exists:products,id',
             'display_order' => 'integer',
         ]);
 

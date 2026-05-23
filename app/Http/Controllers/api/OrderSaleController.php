@@ -90,6 +90,46 @@ class OrderSaleController extends BaseController
         ], Response::HTTP_CREATED);
     }
 
+    /**
+     * Create a restaurant order with menu items
+     * Specific endpoint for restaurant operations
+     */
+    public function createRestaurantOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'menu_items' => 'required|array|min:1',
+            'menu_items.*.menu_item_id' => 'required|exists:menu_items,id',
+            'menu_items.*.quantity' => 'required|numeric|min:0.01',
+            'customer_id' => 'nullable|exists:customers,id',
+            'discount' => 'nullable|numeric|min:0',
+            'advance' => 'nullable|numeric|min:0',
+            'note' => 'nullable|string',
+        ]);
+
+        try {
+            $order = $this->saleService->createRestaurantOrder($validated);
+
+            return response()->json([
+                'order' => new OrderResource($order),
+                'message' => 'Restaurant order created successfully',
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error(
+                'error occurred while creating restaurant order',
+                [
+                    LogParametersList::STORE_ID->value => $this->the_store(),
+                    LogParametersList::FEATURE->value => LogParametersList::CREATE->value,
+                    LogParametersList::ERROR_MESSAGE->value => $e->getMessage(),
+                    LogParametersList::ERROR_TRACE->value => $e->getTraceAsString(),
+                    LogParametersList::REQUEST->value => $request->all(),
+                ]
+            );
+            return response()->json([
+                'message' => 'Error creating restaurant order: ' . $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
     public function addPaymentToOrder(Request $request, $id)
     {
 

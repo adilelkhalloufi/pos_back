@@ -8,6 +8,7 @@ use App\Models\RecipeIngredient;
 use App\Models\StoreProducts;
 use App\Models\StockMovement;
 use App\Models\TheoreticalConsumption;
+use App\Models\OrderSale;
 use App\Services\UnitConversion\ConversionService;
 use App\Services\Costing\CostingService;
 use Exception;
@@ -52,11 +53,70 @@ class StockDeductionService
         DB::beginTransaction();
 
         try {
-            $menuItem = MenuItem::with(['recipe.ingredients.product.unit'])->findOrFail($menuItemId);
+            $menuItem = MenuItem::with(['recipe.ingredients.product.unit', 'product'])->findOrFail($menuItemId);
 
-            // Check if menu item has a recipe
+            // Handle product-based menu items (direct product link)
+            if ($menuItem->item_type === MenuItem::ITEM_TYPE_PRODUCT && $menuItem->product_id) {
+                $product = $menuItem->product;
+
+                if (!$product) {
+                    throw new Exception("Product not found for menu item '{$menuItem->name}'.");
+                }
+
+                // Deduct product stock directly
+                $storeProduct = StoreProducts::where('product_id', $product->id)
+                    ->where('store_id', $storeId)
+                    ->first();
+
+                if (!$storeProduct) {
+                    throw new Exception("Product '{$product->name}' not available in store.");
+                }
+
+                // Check stock availability
+                if ($storeProduct->stock < $quantity) {
+                    throw new Exception(
+                        "Insufficient stock for product '{$product->name}'. " .
+                            "Required: {$quantity}, Available: {$storeProduct->stock}"
+                    );
+                }
+
+                // Deduct stock
+                $storeProduct->decrement('stock', $quantity);
+
+                // Create stock movement
+                StockMovement::create([
+                    'store_id' => $storeId,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'type' => 'sale',
+                    'direction' => 'out',
+                    'unit_cost' => $product->price_buy ?? 0,
+                    'total_cost' => ($product->price_buy ?? 0) * $quantity,
+                    'user_id' => $userId,
+                    'referenceable_type' => OrderSale::class,
+                    'referenceable_id' => $orderSaleId,
+                    'note' => "Menu item sale: {$menuItem->name}",
+                ]);
+
+                DB::commit();
+
+                return [
+                    'success' => true,
+                    'menu_item' => $menuItem->name,
+                    'quantity_sold' => $quantity,
+                    'item_type' => 'product',
+                    'product' => $product->name,
+                    'deductions' => [[
+                        'product' => $product->name,
+                        'quantity_deducted' => $quantity,
+                        'remaining_stock' => $storeProduct->fresh()->stock,
+                    ]],
+                ];
+            }
+
+            // Handle recipe-based menu items
             if (!$menuItem->recipe_id) {
-                throw new Exception("Menu item '{$menuItem->name}' has no recipe attached.");
+                throw new Exception("Menu item '{$menuItem->name}' has no recipe or product attached.");
             }
 
             $recipe = $menuItem->recipe;
@@ -87,6 +147,7 @@ class StockDeductionService
                 'success' => true,
                 'menu_item' => $menuItem->name,
                 'quantity_sold' => $quantity,
+                'item_type' => 'recipe',
                 'recipe' => $recipe->name,
                 'deductions' => $deductions,
             ];

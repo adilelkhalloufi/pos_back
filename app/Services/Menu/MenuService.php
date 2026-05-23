@@ -191,12 +191,13 @@ class MenuService
                 'description' => $itemData['description'] ?? null,
                 'image' => $itemData['image'] ?? null,
                 'price' => $itemData['price'],
-                'cost' => 0, // Will be calculated if recipe linked
+                'cost' => 0, // Will be calculated if recipe/product linked
                 'is_active' => $itemData['is_active'] ?? true,
                 'is_available' => $itemData['is_available'] ?? true,
                 'preparation_time_minutes' => $itemData['preparation_time_minutes'] ?? null,
                 'item_type' => $itemData['item_type'] ?? MenuItem::ITEM_TYPE_RECIPE,
                 'recipe_id' => $itemData['recipe_id'] ?? null,
+                'product_id' => $itemData['product_id'] ?? null,
                 'store_id' => $itemData['store_id'],
                 'display_order' => $itemData['display_order'] ?? 0,
             ]);
@@ -204,6 +205,9 @@ class MenuService
             // If recipe is linked, update cost from recipe
             if ($item->item_type === MenuItem::ITEM_TYPE_RECIPE && $item->recipe_id) {
                 $item->updateCostFromRecipe();
+            } elseif ($item->item_type === MenuItem::ITEM_TYPE_PRODUCT && $item->product_id) {
+                // If product is linked, update cost from product
+                $item->updateCostFromProduct();
             } elseif (isset($itemData['cost'])) {
                 // Manual cost for simple items
                 $item->update(['cost' => $itemData['cost']]);
@@ -211,7 +215,7 @@ class MenuService
 
             DB::commit();
 
-            return $item->fresh(['recipe', 'category']);
+            return $item->fresh(['recipe', 'product', 'category']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -243,6 +247,7 @@ class MenuService
                 'preparation_time_minutes' => $itemData['preparation_time_minutes'] ?? $item->preparation_time_minutes,
                 'item_type' => $itemData['item_type'] ?? $item->item_type,
                 'recipe_id' => $itemData['recipe_id'] ?? $item->recipe_id,
+                'product_id' => $itemData['product_id'] ?? $item->product_id,
                 'display_order' => $itemData['display_order'] ?? $item->display_order,
             ], function ($value) {
                 return $value !== null;
@@ -251,13 +256,15 @@ class MenuService
             // Update cost if recipe changed or manual cost provided
             if (isset($itemData['recipe_id']) && $item->item_type === MenuItem::ITEM_TYPE_RECIPE) {
                 $item->updateCostFromRecipe();
+            } elseif (isset($itemData['product_id']) && $item->item_type === MenuItem::ITEM_TYPE_PRODUCT) {
+                $item->updateCostFromProduct();
             } elseif (isset($itemData['cost'])) {
                 $item->update(['cost' => $itemData['cost']]);
             }
 
             DB::commit();
 
-            return $item->fresh(['recipe', 'category']);
+            return $item->fresh(['recipe', 'product', 'category']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -433,7 +440,7 @@ class MenuService
     {
         $totalMenus = Menu::where('store_id', $storeId)->count();
         $activeMenus = Menu::where('store_id', $storeId)->where('is_active', true)->count();
-        
+
         $totalCategories = MenuCategory::whereHas('menu', function ($query) use ($storeId) {
             $query->where('store_id', $storeId);
         })->count();

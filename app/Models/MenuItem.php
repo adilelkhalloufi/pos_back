@@ -21,12 +21,14 @@ class MenuItem extends BaseModel
     public const COL_PREPARATION_TIME_MINUTES = 'preparation_time_minutes';
     public const COL_ITEM_TYPE = 'item_type';
     public const COL_RECIPE_ID = 'recipe_id';
+    public const COL_PRODUCT_ID = 'product_id';
     public const COL_STORE_ID = 'store_id';
     public const COL_DISPLAY_ORDER = 'display_order';
 
     public const ITEM_TYPE_RECIPE = 'recipe';
     public const ITEM_TYPE_COMBO = 'combo';
     public const ITEM_TYPE_SIMPLE = 'simple';
+    public const ITEM_TYPE_PRODUCT = 'product';
 
     protected $fillable = [
         self::COL_MENU_CATEGORY_ID,
@@ -40,6 +42,7 @@ class MenuItem extends BaseModel
         self::COL_PREPARATION_TIME_MINUTES,
         self::COL_ITEM_TYPE,
         self::COL_RECIPE_ID,
+        self::COL_PRODUCT_ID,
         self::COL_STORE_ID,
         self::COL_DISPLAY_ORDER,
     ];
@@ -67,6 +70,14 @@ class MenuItem extends BaseModel
     public function recipe()
     {
         return $this->belongsTo(Recipe::class);
+    }
+
+    /**
+     * Get the linked product (for product-based menu items)
+     */
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /**
@@ -125,6 +136,28 @@ class MenuItem extends BaseModel
 
         $this->update([
             self::COL_COST => $recipe->total_cost,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Update cost from linked product
+     */
+    public function updateCostFromProduct(): bool
+    {
+        if ($this->item_type !== self::ITEM_TYPE_PRODUCT || !$this->product_id) {
+            return false;
+        }
+
+        $product = $this->product;
+        if (!$product) {
+            return false;
+        }
+
+        // Use product's purchase price as cost
+        $this->update([
+            self::COL_COST => $product->price_buy ?? 0,
         ]);
 
         return true;
