@@ -63,9 +63,8 @@ class DatabaseSeeder extends Seeder
         $this->call(ModePayemntSeeder::class);
         // $this->call(SupplierSeeder::class);
         $this->call(CategorySeeds::class);
-        // $this->call(QuickStartProductSeeder::class);
-        //  $this->call(QuickTestSeeder::class);
-
-       
+        $this->call(QuickStartProductSeeder::class);
+        $this->call(QuickTestSeeder::class);
+        // php artisan products:import-excel
     }
 }
