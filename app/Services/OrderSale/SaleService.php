@@ -14,6 +14,7 @@ use App\Services\Payement\PayementService;
 use App\Services\Sale\OrderSaleDetailService;
 use App\Services\Setting\SettingService;
 use App\Services\Stock\StockService;
+use App\Services\Stock\StockDeductionService;
 use Illuminate\Support\Facades\DB;
 
 class SaleService
@@ -26,6 +27,7 @@ class SaleService
         private SaleRepository $saleRepository,
         private AlertService $alertService,
         private StockService $stockService,
+        private StockDeductionService $stockDeductionService,
     ) {}
     public function findById(int $id)
     {
@@ -43,7 +45,9 @@ class SaleService
         try {
             $storeId = currentStoreId();
             // Get count of orders created today and format as 00001, 00002, etc.
-            $todayOrderCount = OrderSale::whereDate('created_at', today())->count();
+            $todayOrderCount = OrderSale::where(OrderSale::COL_STORE_ID, $storeId)
+                ->whereDate('created_at', today())
+                ->count();
             $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
 
 
@@ -287,8 +291,10 @@ class SaleService
         try {
             $storeId = currentStoreId();
 
-            // Get count of orders created today
-            $todayOrderCount = OrderSale::whereDate('created_at', today())->count();
+            // Get count of orders created today for this store
+            $todayOrderCount = OrderSale::where(OrderSale::COL_STORE_ID, $storeId)
+                ->whereDate('created_at', today())
+                ->count();
             $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
 
             // Calculate total from menu items
@@ -360,7 +366,151 @@ class SaleService
             }
 
             DB::commit();
-            return $sale->load(['orderItems', 'user', 'customer']);
+            return $sale->load(['orderItems.product', 'user', 'customer']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Create restaurant sale from frontend menu items
+     * 
+     * @param array $attributes - Contains 'items' array with full item data, 'total_command', 'total_payment'
+     * @return OrderSale|null
+     * @throws \Exception
+     */
+    public function sellMenuItems(array $attributes): ?OrderSale
+    {
+        DB::beginTransaction();
+        try {
+            $storeId = currentStoreId();
+
+            // Get count of orders created today for this store
+            $todayOrderCount = OrderSale::where(OrderSale::COL_STORE_ID, $storeId)
+                ->whereDate('created_at', today())
+                ->count();
+            $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
+
+            // Validate items and prepare order items data
+            $menuItemsData = [];
+            $calculatedTotal = 0;
+
+            foreach ($attributes['items'] ?? [] as $item) {
+                // Fetch menu item from database to verify it exists and is available
+                $menuItem = \App\Models\MenuItem::with(['recipe', 'product'])->find($item['id']);
+
+                if (!$menuItem) {
+                    throw new \Exception("Menu item with ID {$item['id']} not found");
+                }
+
+                if (!$menuItem->is_active || !$menuItem->is_available) {
+                    throw new \Exception("Menu item '{$menuItem->name}' is not available");
+                }
+
+                // Validate price matches (security check to prevent price manipulation)
+                if (abs($menuItem->price - $item['price']) > 0.01) {
+                    throw new \Exception("Price mismatch for menu item '{$menuItem->name}'");
+                }
+
+                $quantity = $item['qte'] ?? $item['quantity'] ?? 1;
+                $itemTotal = $menuItem->price * $quantity;
+                $calculatedTotal += $itemTotal;
+
+                $menuItemsData[] = [
+                    'menu_item' => $menuItem,
+                    'quantity' => $quantity,
+                    'price' => $menuItem->price,
+                    'cost' => $menuItem->cost,
+                    'total' => $itemTotal,
+                    'item_type' => $item['item_type'] ?? $menuItem->item_type,
+                ];
+            }
+
+            // Note: Stock deduction will happen after order creation
+            // to ensure we have a valid order reference for stock movements
+
+            // Validate total (allow small floating point differences)
+            $totalCommand = $attributes['total_command'] ?? $calculatedTotal;
+            if (abs($totalCommand - $calculatedTotal) > 0.05) {
+                throw new \Exception("Total amount mismatch. Expected: {$calculatedTotal}, Received: {$totalCommand}");
+            }
+
+            // Calculate payments
+            $totalPayment = $attributes['total_payment'] ?? 0;
+            $discount = $attributes['discount'] ?? 0;
+            $advance = $attributes['advance'] ?? $totalPayment;
+            $restToPay = max(0, $totalCommand - $advance - $discount);
+
+            // Determine order status
+            $status = $restToPay == 0
+                ? EnumPayementStatue::PAID->value
+                : ($advance > 0 ? EnumPayementStatue::AVANCE->value : EnumPayementStatue::UNPAID->value);
+
+            // Create order
+            $sale = OrderSale::create([
+                OrderSale::COL_ORDER_NUMBER => $orderNumber,
+                OrderSale::COL_ADVANCE => $advance,
+                OrderSale::COL_DISCOUNT => $discount,
+                OrderSale::COL_TOTAL_COMMAND => $totalCommand,
+                OrderSale::COL_TOTAL_PAYMENT => $totalPayment,
+                OrderSale::COL_REST_A_PAY => $restToPay,
+                OrderSale::COL_STATUS => $status,
+                OrderSale::COL_IS_INVOICE => true,
+                OrderSale::COL_STORE_ID => $storeId,
+                OrderSale::COL_USER_ID => auth()->id(),
+                OrderSale::COL_NOTE => $attributes['note'] ?? null,
+                OrderSale::COL_INVOICE_TOTAL => $totalCommand,
+                OrderSale::COL_CUSTOMER_ID => $attributes['customer_id'] ?? null,
+            ]);
+
+            // Create order items and handle stock deduction
+            foreach ($menuItemsData as $itemData) {
+                $menuItem = $itemData['menu_item'];
+                $quantity = $itemData['quantity'];
+
+                \App\Models\OrderItems::create([
+                    \App\Models\OrderItems::COL_NAME => $menuItem->name,
+                    \App\Models\OrderItems::COL_ORDER_ID => $sale->getId(),
+                    \App\Models\OrderItems::COL_STORE_ID => $storeId,
+                    \App\Models\OrderItems::COL_PRODUCT_ID => $menuItem->id,
+                    \App\Models\OrderItems::COL_PRODUCT_TYPE => \App\Models\MenuItem::class,
+                    \App\Models\OrderItems::COL_PRICE => $itemData['price'],
+                    \App\Models\OrderItems::COL_QTE => $quantity,
+                    \App\Models\OrderItems::COL_TOTAL => $itemData['total'],
+                    \App\Models\OrderItems::COL_INVOICE_PRICE => $itemData['price'],
+                ]);
+
+                // Use StockDeductionService for proper stock management
+                // This handles: recipe ingredients, unit conversion, waste percentage, 
+                // theoretical consumption, and proper error handling
+                // Note: Only deduct stock for recipe-based and product-based items
+                // Simple items (like delivery fees) don't have stock tracking
+                if (in_array($menuItem->item_type, [\App\Models\MenuItem::ITEM_TYPE_RECIPE, \App\Models\MenuItem::ITEM_TYPE_PRODUCT])) {
+                    $this->stockDeductionService->deductMenuItemStock(
+                        $menuItem->id,
+                        $quantity,
+                        $storeId,
+                        auth()->id(),
+                        $sale->getId()
+                    );
+                }
+            }
+
+            // Record payment if advance was made
+            if ($advance > 0) {
+                Payemnt::create([
+                    Payemnt::COL_ORDER_ID => $sale->getId(),
+                    Payemnt::COL_STORE_ID => $storeId,
+                    Payemnt::COL_USER_ID => auth()->id(),
+                    Payemnt::COL_AMOUNT => $advance,
+                    Payemnt::COL_MODE_PAYEMNT_ID => $attributes['payment_method_id'] ?? null,
+                    Payemnt::COL_NOTE => "Initial payment for order #{$orderNumber}",
+                ]);
+            }
+
+            DB::commit();
+            return $sale->load(['orderItems.product', 'user', 'customer', 'payments']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

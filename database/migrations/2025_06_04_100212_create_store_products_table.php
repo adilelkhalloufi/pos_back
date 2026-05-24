@@ -15,17 +15,16 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('store_id')
-            ->nullable()
-            ->constrained('stores');
-            
+                ->nullable()
+                ->constrained('stores');
+
             $table->foreignId('product_id')
-            ->nullable()
-            ->constrained('products');
+                ->nullable()
+                ->constrained('products');
 
             $table->decimal('price', 10, 2)->default(0);
             $table->decimal('cost', 10, 2)->nullable();
-            $table->integer('stock')->default(0);
-
+            $table->decimal('stock', 12, 6)->default(0);
 
 
             $table->timestamps();

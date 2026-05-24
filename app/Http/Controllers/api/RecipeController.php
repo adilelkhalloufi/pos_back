@@ -27,8 +27,8 @@ class RecipeController extends BaseController
     {
         try {
             $storeId = $this->storeId();
- 
-         
+
+
 
             $recipes = $this->recipeService->getStoreRecipes($storeId);
 
@@ -54,7 +54,7 @@ class RecipeController extends BaseController
             'yield_unit_id' => 'required|integer|exists:units,id',
             'preparation_time_minutes' => 'nullable|integer|min:0',
             'cooking_time_minutes' => 'nullable|integer|min:0',
-            'skill_level' => 'nullable|string|in:beginner,intermediate,advanced,expert',
+            'skill_level' => 'nullable|string',
             'is_active' => 'boolean',
 
             // Ingredients array
@@ -66,11 +66,11 @@ class RecipeController extends BaseController
             'ingredients.*.preparation_note' => 'nullable|string|max:255',
             'ingredients.*.is_optional' => 'nullable|boolean',
         ]);
-       
+
         try {
             $storeId = $this->storeId();
             $validated['store_id'] = $storeId;
-            
+
             $validated['user_id'] = Auth::id();
 
             $ingredients = $validated['ingredients'] ?? [];
@@ -113,7 +113,8 @@ class RecipeController extends BaseController
             'yield_unit_id' => 'sometimes|required|integer|exists:units,id',
             'preparation_time_minutes' => 'nullable|integer|min:0',
             'cooking_time_minutes' => 'nullable|integer|min:0',
-            'skill_level' => 'nullable|string|in:beginner,intermediate,advanced,expert',
+            'skill_level' => 'nullable|string',
+
             'is_active' => 'boolean',
 
             // Ingredients array - if provided, replaces all ingredients

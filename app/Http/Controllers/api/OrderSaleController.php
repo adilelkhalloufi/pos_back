@@ -130,6 +130,60 @@ class OrderSaleController extends BaseController
         }
     }
 
+    /**
+     * Sell menu items - endpoint for POS/restaurant frontend
+     * Accepts full item data from frontend
+     */
+    public function sellMenuItems(Request $request)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|integer|exists:menu_items,id',
+            'items.*.name' => 'required|string',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.cost' => 'nullable|numeric|min:0',
+            'items.*.qte' => 'required|numeric|min:0.01',
+            'items.*.item_type' => 'nullable|string',
+            'items.*.image' => 'nullable|string',
+            'items.*.description' => 'nullable|string',
+            'items.*.category_id' => 'nullable|integer',
+            'items.*.stock' => 'nullable|numeric',
+            'items.*.preparation_time_minutes' => 'nullable|integer',
+            'total_command' => 'required|numeric|min:0',
+            'total_payment' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'advance' => 'nullable|numeric|min:0',
+            'customer_id' => 'nullable|exists:customers,id',
+            'payment_method_id' => 'nullable|exists:payement_methods,id',
+            'note' => 'nullable|string',
+        ]);
+
+        try {
+            $order = $this->saleService->sellMenuItems($validated);
+
+            return response()->json([
+                'success' => true,
+                'order' => new OrderResource($order),
+                'message' => 'Menu items sold successfully',
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error(
+                'error occurred while selling menu items',
+                [
+                    LogParametersList::STORE_ID->value => $this->the_store(),
+                    LogParametersList::FEATURE->value => LogParametersList::CREATE->value,
+                    LogParametersList::ERROR_MESSAGE->value => $e->getMessage(),
+                    LogParametersList::ERROR_TRACE->value => $e->getTraceAsString(),
+                    LogParametersList::REQUEST->value => $request->all(),
+                ]
+            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Error selling menu items: ' . $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
     public function addPaymentToOrder(Request $request, $id)
     {
 

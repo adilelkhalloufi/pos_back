@@ -180,7 +180,7 @@ class StockDeductionService
         $product = $ingredient->product;
 
         // Calculate quantity needed (including waste percentage)
-        $quantityNeeded = $ingredient->quantity_with_waste * $multiplier;
+        $quantityNeeded = $ingredient->effective_quantity * $multiplier;
 
         // Get store product
         $storeProduct = StoreProducts::where('product_id', $product->id)
@@ -238,7 +238,7 @@ class StockDeductionService
             'user_id' => $userId,
             'referenceable_type' => 'App\\Models\\OrderSale',
             'referenceable_id' => $orderSaleId,
-            'notes' => "Auto-deduction for menu item: {$menuItem->name}",
+            'note' => "Auto-deduction for menu item: {$menuItem->name}",
         ]);
 
         // Update theoretical consumption

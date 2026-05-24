@@ -64,9 +64,21 @@ class DatabaseSeeder extends Seeder
         // $this->call(SupplierSeeder::class);
         $this->call(CategorySeeds::class);
         $this->call(QuickStartProductSeeder::class);
-        $this->call(MenuSeeder::class);
-        $this->call(MenuCategorySeeder::class);
+
+        // ============================================
+        // QUICK TEST SEEDER (Comment/uncomment as needed)
+        // ============================================
+        // Creates: 1 Menu → 1 Category → 1 Recipe → 1 Menu Item
+        $this->call(QuickTestSeeder::class);
+
+        // ============================================
+        // FULL SEEDERS (Commented for testing)
+        // ============================================
+        // Uncomment these to populate full data:
+        // $this->call(MenuSeeder::class);
+        // $this->call(MenuCategorySeeder::class);
+        // $this->call(RecipeSeeder::class);
+        // $this->call(MenuItemSeeder::class);
         // $this->call(TestPurchaseDataSeeder::class);
     }
 }
-

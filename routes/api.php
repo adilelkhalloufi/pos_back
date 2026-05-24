@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::post('/orders/{id}/payment', [OrderSaleController::class, 'addPaymentToOrder']);
     Route::post('/orders/{id}/invoice', [OrderSaleController::class, 'updateToInvoice']);
     Route::post('/restaurant-orders', [OrderSaleController::class, 'createRestaurantOrder']); // Restaurant-specific order creation
+    Route::post('/sell-menu-items', [OrderSaleController::class, 'sellMenuItems']); // Sell menu items from POS/restaurant frontend
     Route::resource('/orders', OrderSaleController::class);
 
     Route::resource('/categories', CategoryController::class);
