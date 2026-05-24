@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Log;
 
 class RecipeIngredient extends BaseModel
 {
@@ -62,8 +63,8 @@ class RecipeIngredient extends BaseModel
     }
 
     /**
-     * Calculate the cost of this ingredient including waste
-     * Formula: (quantity + (quantity * waste_percentage / 100)) * unit_cost
+     * Calculate the cost of this ingredient including waste and unit conversion
+     * Formula: (quantity_converted + (quantity_converted * waste_percentage / 100)) * unit_cost
      * This will be called by RecipeService
      */
     public function calculateCost(): float
@@ -75,17 +76,43 @@ class RecipeIngredient extends BaseModel
 
         if (!$storeProduct || !$storeProduct->cost) {
             // Fallback to product's price_buy if store-specific cost not available
-            $cost = $this->product->price_buy ?? 0;
+            $costPerUnit = $this->product->price_buy ?? 0;
         } else {
-            $cost = $storeProduct->cost;
+            $costPerUnit = $storeProduct->cost;
+        }
+
+        // Get the product's base unit (the unit in which cost is stored)
+        $productUnitId = $this->product->unit_id;
+        $recipeUnitId = $this->unit_id;
+
+        // Convert quantity to product's unit if necessary
+        $quantityInProductUnit = $this->quantity;
+
+        if ($productUnitId !== $recipeUnitId) {
+            // Need to convert units
+            $conversionService = app(\App\Services\UnitConversion\ConversionService::class);
+
+            try {
+                $quantityInProductUnit = $conversionService->convert(
+                    $this->quantity,
+                    $recipeUnitId,
+                    $productUnitId,
+                    $this->recipe->store_id
+                );
+            } catch (\Exception $e) {
+                // If conversion fails, log warning and use original quantity
+                Log::warning("Unit conversion failed for ingredient {$this->product->name}: " . $e->getMessage());
+                // Fall back to no conversion (will give incorrect cost, but won't break)
+                $quantityInProductUnit = $this->quantity;
+            }
         }
 
         // Calculate quantity with waste factored in
-        $wasteMultiplier = 1 + ($this->waste_percentage / 100);
-        $effectiveQuantity = $this->quantity * $wasteMultiplier;
+        $wasteMultiplier = 1 + (($this->waste_percentage ?? 0) / 100);
+        $effectiveQuantity = $quantityInProductUnit * $wasteMultiplier;
 
         // Calculate total cost
-        $totalCost = $effectiveQuantity * $cost;
+        $totalCost = $effectiveQuantity * $costPerUnit;
 
         // Update the cost field
         $this->update([self::COL_COST => $totalCost]);
