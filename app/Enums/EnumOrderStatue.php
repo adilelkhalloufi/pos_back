@@ -22,6 +22,12 @@ enum EnumOrderStatue: int implements HasLabel
     case MANUAL_VERIFICATION_REQUIRED = 13;
     case PARTIAL_REFUNDED = 14;
 
+        // Purchase Order Delivery Statuses
+    case ORDERED = 15;                // Bon de Commande créé
+    case RECEIVING = 16;              // En cours de réception
+    case PARTIALLY_RECEIVED = 17;     // Reçu partiellement
+    case FULLY_RECEIVED = 18;         // Reçu complètement
+
     public function getLabel(): ?string
     {
         return match ($this) {
@@ -39,7 +45,10 @@ enum EnumOrderStatue: int implements HasLabel
             self::DISPUTED => 'Contesté',
             self::MANUAL_VERIFICATION_REQUIRED => 'Vérification manuelle requise',
             self::PARTIAL_REFUNDED => 'Remboursé partiellement',
-     
+            self::ORDERED => 'Commandé',
+            self::RECEIVING => 'En cours de réception',
+            self::PARTIALLY_RECEIVED => 'Reçu partiellement',
+            self::FULLY_RECEIVED => 'Reçu complètement',
         };
     }
 
@@ -60,8 +69,10 @@ enum EnumOrderStatue: int implements HasLabel
             self::DISPUTED => 'brown',
             self::MANUAL_VERIFICATION_REQUIRED => 'darkorange',
             self::PARTIAL_REFUNDED => 'lightyellow',
+            self::ORDERED => 'cyan',
+            self::RECEIVING => 'lime',
+            self::PARTIALLY_RECEIVED => 'amber',
+            self::FULLY_RECEIVED => 'emerald',
         };
     }
- 
 }
- 

@@ -21,6 +21,7 @@ use App\Http\Controllers\api\PriceChangeController;
 use App\Http\Controllers\api\PrintProfileController;
 use App\Http\Controllers\api\ProductComponentController;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\PurchaseDeliveryController;
 use App\Http\Controllers\api\RecipeController;
 use App\Http\Controllers\api\ReportController;
 use App\Http\Controllers\api\SettingController;
@@ -80,6 +81,13 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::post('/purchases/import', [OrderPurchaseController::class, 'import']);
     Route::put('/purchases/{id}/approve', [OrderPurchaseController::class, 'approve']);
     Route::put('/purchases/{id}/cancel', [OrderPurchaseController::class, 'cancel']);
+
+    // Purchase Delivery Routes (Bon de Livraison)
+    Route::get('/purchases/{purchaseOrderId}/deliveries', [PurchaseDeliveryController::class, 'indexByPurchaseOrder']);
+    Route::post('/purchase-deliveries', [PurchaseDeliveryController::class, 'store']);
+    Route::get('/purchase-deliveries/{id}', [PurchaseDeliveryController::class, 'show']);
+    Route::post('/purchase-deliveries/{id}/validate', [PurchaseDeliveryController::class, 'validate']);
+    Route::post('/purchase-deliveries/{id}/cancel', [PurchaseDeliveryController::class, 'cancel']);
 
     Route::get('/caisse', [PayemntController::class, 'caisse']);
 
