@@ -35,9 +35,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $store1 = Store::create([
-            'name' => 'DutyFree',
+            'name' => 'store one',
             'address' => 'address 1',
             'phone' => '123456789',
+            'owner_id' => $owner->id,
+        ]);
+
+        $store2 = Store::create([
+            'name' => 'store two',
+            'address' => 'address 2',
+            'phone' => '987654321',
             'owner_id' => $owner->id,
         ]);
 
@@ -52,6 +59,11 @@ class DatabaseSeeder extends Seeder
         $userStore1 = UserStore::create([
             'user_id' => $vender1->id,
             'store_id' => $store1->id,
+        ]);
+
+        $userStore2 = UserStore::create([
+            'user_id' => $vender1->id,
+            'store_id' => $store2->id,
         ]);
 
         // Seed units and conversions (must be early for products to use)

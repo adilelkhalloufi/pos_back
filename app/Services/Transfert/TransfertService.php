@@ -52,7 +52,7 @@ class TransfertService
                     if ($storeProduct->stock < $item['quantity']) {
                         throw new \Exception(
                             "Insufficient stock for product ID {$item['product_id']}. " .
-                            "Available: {$storeProduct->stock}, Requested: {$item['quantity']}"
+                                "Available: {$storeProduct->stock}, Requested: {$item['quantity']}"
                         );
                     }
                 }
@@ -126,7 +126,7 @@ class TransfertService
 
             if ($status === 'completed') {
                 $productIds = [];
-                
+
                 // If not already sent, mark as sent and deduct from source
                 if (!$transfert->sent_at) {
                     $updateData[Transfert::COL_SENT_AT] = now();
@@ -140,7 +140,7 @@ class TransfertService
                         );
                         $productIds[] = $item->product_id;
                     }
-                    
+
                     // Check alerts for source store
                     if (!empty($productIds)) {
                         $this->alertService->generateProductStockAlertsForProducts($productIds, $transfert->source_store_id);
@@ -155,13 +155,14 @@ class TransfertService
                     $this->updateStoreStock(
                         $transfert->target_store_id,
                         $item->product_id,
-                        $item->quantity
+                        $item->quantity,
+                        $transfert->source_store_id
                     );
                     if (!in_array($item->product_id, $productIds)) {
                         $productIds[] = $item->product_id;
                     }
                 }
-                
+
                 // Check alerts for target store
                 if (!empty($productIds)) {
                     $this->alertService->generateProductStockAlertsForProducts($productIds, $transfert->target_store_id);
@@ -207,7 +208,7 @@ class TransfertService
     /**
      * Update store product stock
      */
-    private function updateStoreStock(int $storeId, int $productId, float $quantity): void
+    private function updateStoreStock(int $storeId, int $productId, float $quantity, ?int $templateStoreId = null): void
     {
         $storeProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $storeId)
             ->where(StoreProducts::COL_PRODUCT_ID, $productId)
@@ -215,6 +216,33 @@ class TransfertService
 
         if ($storeProduct) {
             $storeProduct->increment(StoreProducts::COL_STOCK, $quantity);
+            return;
         }
+
+        if ($quantity <= 0) {
+            return;
+        }
+
+        $price = 0;
+        $cost = 0;
+
+        if ($templateStoreId) {
+            $templateProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $templateStoreId)
+                ->where(StoreProducts::COL_PRODUCT_ID, $productId)
+                ->first();
+
+            if ($templateProduct) {
+                $price = $templateProduct->{StoreProducts::COL_PRICE};
+                $cost = $templateProduct->{StoreProducts::COL_COST};
+            }
+        }
+
+        StoreProducts::create([
+            StoreProducts::COL_STORE_ID => $storeId,
+            StoreProducts::COL_PRODUCT_ID => $productId,
+            StoreProducts::COL_PRICE => $price,
+            StoreProducts::COL_COST => $cost,
+            StoreProducts::COL_STOCK => $quantity,
+        ]);
     }
 }
