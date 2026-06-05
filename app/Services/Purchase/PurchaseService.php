@@ -73,31 +73,31 @@ class PurchaseService
             // Update purchase order status and order number
             $purchase->update([
                 OrderPurchase::COL_ORDER_NUMBER => $orderNumber,
-                OrderPurchase::COL_STATUS => EnumOrderStatue::COMPLETED->value,
+                OrderPurchase::COL_STATUS => EnumOrderStatue::ORDERED->value,
             ]);
 
             // Increment the sequence in settings
             $this->settingService->incrementPurchaseOrderNumber();
 
             // Process each purchase item
-            foreach ($purchase->orderItems as $item) {
-                // Use StockService to handle stock movement
-                $this->stockService->processStoreProductMovement([
-                    StockMovement::COL_STORE_ID => $purchase->{OrderPurchase::COL_STORE_ID},
-                    StockMovement::COL_PRODUCT_ID => $item->product_id,
-                    StockMovement::COL_QUANTITY => $item->quantity,
-                    StockMovement::COL_TYPE => StockMovement::TYPE_PURCHASE,
-                    StockMovement::COL_DIRECTION => StockMovement::DIRECTION_IN,
-                    StockMovement::COL_UNIT_COST => $item->price,
-                    StockMovement::COL_TOTAL_COST => $item->price * $item->quantity,
-                    StockMovement::COL_REFERENCEABLE_TYPE => OrderPurchase::class,
-                    StockMovement::COL_REFERENCEABLE_ID => $purchase->id,
-                    StockMovement::COL_USER_ID => auth()->id(),
-                    StockMovement::COL_NOTE => 'Purchase order approved: ' . $orderNumber,
-                ]);
-            }
+            // foreach ($purchase->orderItems as $item) {
+            //     // Use StockService to handle stock movement
+            //     $this->stockService->processStoreProductMovement([
+            //         StockMovement::COL_STORE_ID => $purchase->{OrderPurchase::COL_STORE_ID},
+            //         StockMovement::COL_PRODUCT_ID => $item->product_id,
+            //         StockMovement::COL_QUANTITY => $item->quantity,
+            //         StockMovement::COL_TYPE => StockMovement::TYPE_PURCHASE,
+            //         StockMovement::COL_DIRECTION => StockMovement::DIRECTION_IN,
+            //         StockMovement::COL_UNIT_COST => $item->price,
+            //         StockMovement::COL_TOTAL_COST => $item->price * $item->quantity,
+            //         StockMovement::COL_REFERENCEABLE_TYPE => OrderPurchase::class,
+            //         StockMovement::COL_REFERENCEABLE_ID => $purchase->id,
+            //         StockMovement::COL_USER_ID => auth()->id(),
+            //         StockMovement::COL_NOTE => 'Purchase order approved: ' . $orderNumber,
+            //     ]);
+            // }
 
-            // Refresh to get updated relationships
+            // // Refresh to get updated relationships
             return $purchase->fresh();
         });
     }

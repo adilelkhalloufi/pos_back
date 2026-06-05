@@ -21,8 +21,8 @@ class OrderPurchaseResource extends JsonResource
             'created_at' => $this->created_at->format('Y-m-d H:i'),
             'reference' => $this->reference,
             'status' => $this->status !== null && EnumOrderStatue::tryFrom($this->status) !== null
-            ? EnumOrderStatue::from($this->status)->getLabel()
-            : 'Unknown',
+                ? EnumOrderStatue::from($this->status)->getLabel()
+                : 'Unknown',
             'color' => $this->status !== null && EnumOrderStatue::tryFrom($this->status) !== null
                 ? EnumOrderStatue::from($this->status)->getColor()
                 : '#999999',
@@ -35,6 +35,8 @@ class OrderPurchaseResource extends JsonResource
             'public_note' => $this->public_note,
             'private_note' => $this->private_note,
             'paid_method_id' => $this->paid_method_id,
+            'deliveries' => $this->deliveries,
+
 
 
 

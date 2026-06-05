@@ -106,7 +106,7 @@ class OrderPurchaseController extends BaseController
 
     public function show(int $id)
     {
-        $purchase = $this->purchaseService->findwithRelations($id, ['orderItems.product', 'supplier']);
+        $purchase = $this->purchaseService->findwithRelations($id, ['orderItems.product', 'supplier', 'deliveries.deliveryItems']);
 
         if (!$purchase) {
             return response()->json([
