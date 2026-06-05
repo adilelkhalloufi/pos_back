@@ -56,6 +56,7 @@ class UnitsAndConversionsSeeder extends Seeder
             ['id' => 25, 'name' => 'Portion', 'symbol' => 'portion', 'description' => 'Portion individuelle', 'is_active' => true],
             ['id' => 26, 'name' => 'Service', 'symbol' => 'service', 'description' => 'Unité de service de recette', 'is_active' => true],
             ['id' => 27, 'name' => 'Assiette', 'symbol' => 'assiette', 'description' => 'Service en assiette', 'is_active' => true],
+            ['id' => 28, 'name' => 'Verre', 'symbol' => 'verre', 'description' => 'Verre pour boisson', 'is_active' => true],
         ];
 
         // Insérer les unités avec timestamps
@@ -183,6 +184,12 @@ class UnitsAndConversionsSeeder extends Seeder
 
         // Canette standard (soda) = 330ml
         $conversions[] = ['from_unit_id' => 22, 'to_unit_id' => 8, 'conversion_factor' => 330, 'description' => '1 can = 330 ml (standard)'];
+
+        // Verre pour bar: 1 bouteille = 5 verres
+        $conversions[] = ['from_unit_id' => 21, 'to_unit_id' => 28, 'conversion_factor' => 5, 'description' => '1 bouteille = 5 verres'];
+        $conversions[] = ['from_unit_id' => 28, 'to_unit_id' => 21, 'conversion_factor' => 0.2, 'description' => '1 verre = 0.2 bouteille'];
+        $conversions[] = ['from_unit_id' => 28, 'to_unit_id' => 8, 'conversion_factor' => 150, 'description' => '1 verre = 150 ml'];
+        $conversions[] = ['from_unit_id' => 8, 'to_unit_id' => 28, 'conversion_factor' => 0.00666667, 'description' => '1 ml = 0.00666667 verre'];
 
         // Ajouter timestamps et store_id à toutes les conversions
         foreach ($conversions as &$conversion) {
