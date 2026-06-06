@@ -22,18 +22,17 @@ class TransfertRepository extends BaseRepository
     public function getByStore(int $storeId, ?string $type = null)
     {
         $query = $this->getQueryBuilder()
-            ->with(['sourceStore', 'targetStore', 'items.product', 'createdBy', 'receivedBy'])
-            ->orderBy('id', 'desc')
-            ->where(Transfert::COL_STORE_ID, currentStoreId());
+            ->with(['store', 'sourceStore', 'targetStore', 'items.product', 'createdBy', 'receivedBy'])
+            ->orderBy('id', 'desc');
 
         if ($type === 'source') {
             $query->where(Transfert::COL_SOURCE_STORE_ID, $storeId);
         } elseif ($type === 'target') {
             $query->where(Transfert::COL_TARGET_STORE_ID, $storeId);
         } else {
-            $query->where(function($q) use ($storeId) {
+            $query->where(function ($q) use ($storeId) {
                 $q->where(Transfert::COL_SOURCE_STORE_ID, $storeId)
-                  ->orWhere(Transfert::COL_TARGET_STORE_ID, $storeId);
+                    ->orWhere(Transfert::COL_TARGET_STORE_ID, $storeId);
             });
         }
 
@@ -50,7 +49,7 @@ class TransfertRepository extends BaseRepository
     {
         return $this->getQueryBuilder()
             ->where(Transfert::COL_STATUS, $status)
-            ->with(['sourceStore', 'targetStore', 'items.product', 'createdBy','store'])
+            ->with(['sourceStore', 'targetStore', 'items.product', 'createdBy', 'store'])
             ->where(Transfert::COL_STORE_ID, currentStoreId())
             ->orderBy('id', 'desc')
             ->get();
