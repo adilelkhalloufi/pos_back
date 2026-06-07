@@ -19,6 +19,9 @@ class OrderPurchaseItems extends BaseModel
     public const COL_REMAINING_QUANTITY = 'remaining_quantity';
     public const COL_PRICE = 'price';
     public const COL_TOTAL = 'total';
+    public const COL_PRICE_HT = 'price_ht';
+    public const COL_TVA = 'tva';
+    public const COL_PRICE_TTC = 'price_ttc';
 
 
     use HasFactory;

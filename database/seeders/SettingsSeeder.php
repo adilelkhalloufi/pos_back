@@ -82,13 +82,13 @@ class SettingsSeeder extends Seeder
             // Company Information
             [
                 'key' => 'company_name',
-                'value' => 'DETROIT SEA FOOD',
+                'value' => 'Hospitality Concepts',
                 'type' => 'string',
                 'description' => 'Company name displayed on documents',
             ],
             [
                 'key' => 'company_address',
-                'value' => '',
+                'value' => 'MALABATA ROUTE DE SANIA MAROC',
                 'type' => 'string',
                 'description' => 'Company address',
             ],
@@ -112,7 +112,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'company_logo',
-                'value' => './images/client.png',
+                'value' => 'http://127.0.0.1:8000/storage/media/client.png',
                 'type' => 'string',
                 'description' => 'Path to company logo',
             ],
@@ -126,7 +126,8 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'key' => 'footer',
-                'value' => 'ICE : 002175372000008 - IF: 31837969 - RC: 93153',
+                'value' => 'MALABATA ROUTE DE SANIA MAROC
+HOSPITALITY CONCEPT - RC 124873 - ICE 0029901150000921 - F 50413037',
                 'type' => 'string',
                 'description' => 'Document footer text',
             ],
@@ -140,7 +141,7 @@ class SettingsSeeder extends Seeder
             // Printing Settings
             [
                 'key' => 'max_print_copies',
-                'value' => '2',
+                'value' => '1',
                 'type' => 'integer',
                 'description' => 'Maximum number of print copies for orders/invoices',
             ],
@@ -236,13 +237,13 @@ class SettingsSeeder extends Seeder
             // Currency & Tax Settings
             [
                 'key' => 'currency',
-                'value' => 'USD',
+                'value' => 'DH',
                 'type' => 'string',
                 'description' => 'Default currency code (USD, EUR, MAD, etc.)',
             ],
             [
                 'key' => 'currency_symbol',
-                'value' => '$',
+                'value' => 'DH',
                 'type' => 'string',
                 'description' => 'Currency symbol to display',
             ],

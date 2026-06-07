@@ -26,6 +26,9 @@ class OrderPurchase extends BaseModel
     public const COL_PUBLIC_NOTE = 'public_note';
     public const COL_PRIVATE_NOTE = 'private_note';
     public const COL_DISCOUNT = 'discount';
+    public const COL_TOTAL_HT = 'total_ht';
+    public const COL_TOTAL_TVA = 'total_tva';
+    public const COL_TOTAL_TTC = 'total_ttc';
 
     use HasFactory;
 

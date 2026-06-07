@@ -36,6 +36,9 @@ class OrderPurchaseResource extends JsonResource
             'private_note' => $this->private_note,
             'paid_method_id' => $this->paid_method_id,
             'deliveries' => $this->deliveries,
+            'total_ht' => $this->total_ht,
+            'total_tva' => $this->total_tva,
+            'total_ttc' => $this->total_ttc,
 
 
 

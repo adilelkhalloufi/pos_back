@@ -31,6 +31,30 @@ class PurchaseService
 
     public function create(array $attributes): ?OrderPurchase
     {
+        $totalHt = 0;
+        $totalTva = 0;
+        $totalTtc = 0;
+
+        $items = [];
+        foreach ($attributes['details'] as $item) {
+            $priceHt = $item['price'];
+            $quantity = $item['quantity'];
+            $tvaRate = $item['tva'] ?? 20; // Default TVA 20%
+            $tva = ($priceHt * $quantity) * ($tvaRate / 100);
+            $priceTtc = $priceHt + ($priceHt * ($tvaRate / 100));
+
+            $item['price_ht'] = $priceHt;
+            $item['tva'] = $tvaRate;
+            $item['price_ttc'] = $priceTtc;
+            $item['total'] = $priceTtc * $quantity;
+            $item['name'] = $item['product']['name'] ?? 'Unknown Product';
+            $items[] = $item;
+
+            $totalHt += $priceHt * $quantity;
+            $totalTva += $tva;
+            $totalTtc += $item['total'];
+        }
+
         $purchase = $this->purchaseRepository->create([
             OrderPurchase::COL_ORDER_NUMBER => 'Brouillon',
             OrderPurchase::COL_SUPPLIER_ID => $attributes[OrderPurchase::COL_SUPPLIER_ID],
@@ -40,10 +64,13 @@ class PurchaseService
             OrderPurchase::COL_PRIVATE_NOTE => $attributes[OrderPurchase::COL_PRIVATE_NOTE],
             OrderPurchase::COL_STATUS => EnumOrderStatue::PENDING->value,
             OrderPurchase::COL_USER_ID => auth()->id(),
-            OrderPurchase::COL_STORE_ID => currentStoreId()
+            OrderPurchase::COL_STORE_ID => currentStoreId(),
+            OrderPurchase::COL_TOTAL_HT => $totalHt,
+            OrderPurchase::COL_TOTAL_TVA => $totalTva,
+            OrderPurchase::COL_TOTAL_TTC => $totalTtc,
         ]);
 
-        $purchase->orderItems()->createMany($attributes['details']);
+        $purchase->orderItems()->createMany($items);
 
 
         return $purchase;
