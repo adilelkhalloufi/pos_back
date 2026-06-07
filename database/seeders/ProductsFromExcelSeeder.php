@@ -31,7 +31,7 @@ class ProductsFromExcelSeeder extends Seeder
     private $families = [];
     private $subFamilies = [];
     private $productCount = 0;
-    private $purchaseCount = 0;
+    private $stockUpdatedCount = 0;
     private $errors = [];
 
     /**
@@ -91,7 +91,7 @@ class ProductsFromExcelSeeder extends Seeder
             $this->command->info("Import completed successfully!");
             $this->command->info("========================================");
             $this->command->info("Products created: {$this->productCount}");
-            $this->command->info("Purchase orders created: {$this->purchaseCount}");
+            $this->command->info("Stock quantities updated: {$this->stockUpdatedCount}");
             $this->command->info("Suppliers: " . count($this->suppliers));
             $this->command->info("Categories: " . count($this->categories));
             $this->command->info("Units: " . count($this->units));
@@ -225,13 +225,26 @@ class ProductsFromExcelSeeder extends Seeder
             'product_id' => $product->id,
             'price' => $product->price,
             'cost' => $product->price_buy,
-            'stock' => 0, // Will be updated by purchase order
+            'stock' => $quantity,
         ]);
 
-        // Create purchase order if quantity > 0
-        if ($quantity > 0 && $supplier) {
-            $this->createPurchaseOrder($product, $supplier, $quantity, $unitPrice);
-        }
+        // Create a stock movement for the initial quantity
+        // if ($quantity > 0) {
+        //     StockMovement::create([
+        //         StockMovement::COL_STORE_ID => $this->store->id,
+        //         StockMovement::COL_PRODUCT_ID => $product->id,
+        //         StockMovement::COL_QUANTITY => $quantity,
+        //         StockMovement::COL_TYPE => StockMovement::TYPE_INITIAL_STOCK,
+        //         StockMovement::COL_DIRECTION => StockMovement::DIRECTION_IN,
+        //         StockMovement::COL_UNIT_COST => $unitPrice,
+        //         StockMovement::COL_TOTAL_COST => $unitPrice * $quantity,
+        //         StockMovement::COL_REFERENCEABLE_TYPE => Product::class,
+        //         StockMovement::COL_REFERENCEABLE_ID => $product->id,
+        //         StockMovement::COL_USER_ID => $this->user->id,
+        //         StockMovement::COL_NOTE => 'Initial stock from Excel import',
+        //     ]);
+        //     $this->stockUpdatedCount++;
+        // }
 
         if ($this->productCount % 50 == 0) {
             $this->command->info("Processed {$this->productCount} products...");
@@ -373,49 +386,6 @@ class ProductsFromExcelSeeder extends Seeder
 
         // Default: use first 3 chars as symbol
         return substr($unitName, 0, 3);
-    }
-
-    private function createPurchaseOrder(Product $product, Suppliers $supplier, float $quantity, float $unitPrice): void
-    {
-        // Find or create purchase order for this supplier
-        $orderReference = "IMPORT-{$supplier->id}-" . date('Y-m-d');
-
-        $purchaseOrder = OrderPurchase::firstOrCreate(
-            [
-                'reference' => $orderReference,
-                'supplier_id' => $supplier->id,
-                'store_id' => $this->store->id,
-            ],
-            [
-                'order_number' => 'Brouillon',
-                'status' => EnumOrderStatue::PENDING->value,
-                'paid_method_id' => $this->paymentMethod->id,
-                'user_id' => $this->user->id,
-                'public_note' => 'Import from Excel - ' . date('Y-m-d H:i:s'),
-                'private_note' => 'Automatic import - Not validated yet',
-                'discount' => 0,
-                'due_date' => now()->addDays(30),
-            ]
-        );
-
-        if ($purchaseOrder->wasRecentlyCreated) {
-            $this->purchaseCount++;
-        }
-
-        // Create purchase order item (stock will be added when order is validated)
-        $total = $quantity * $unitPrice;
-
-        OrderPurchaseItems::create([
-            'order_id' => $purchaseOrder->id,
-            'product_id' => $product->id,
-            'store_id' => $this->store->id,
-            'name' => $product->name,
-            'quantity' => $quantity,
-            'price' => round($unitPrice, 2),
-            'total' => round($total, 2),
-        ]);
-
-        // Note: Stock is NOT updated here - it will be updated when the purchase order is validated
     }
 
     private function parseFloat($value): float

@@ -21,7 +21,7 @@ class ImportProductsFromExcel extends Command
      *
      * @var string
      */
-    protected $description = 'Import products and create purchase orders from Excel file';
+    protected $description = 'Import products from Excel and update stock quantities directly';
 
     /**
      * Execute the console command.
@@ -59,7 +59,7 @@ class ImportProductsFromExcel extends Command
         }
 
         // Confirm before proceeding
-        if (!$this->confirm('This will import all products and create purchase orders. Continue?', true)) {
+        if (!$this->confirm('This will import all products and update their stock quantities. Continue?', true)) {
             $this->warn('Import cancelled.');
             return Command::CANCELLED;
         }
