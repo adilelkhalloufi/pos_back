@@ -24,14 +24,14 @@ class StoreProductsController extends BaseController
      */
     public function index(Request $request)
     {
-        $storeId = $this->storeId();
+        $storeId = $request->input('store_id', $this->storeId());
 
         $relations = ['product.category', 'product.barcodes', 'product.unit'];
         $products = $this->storeProductService->getStoreProducts($storeId, $relations);
 
         return response()->json(StoreProductResource::collection($products), Response::HTTP_OK);
     }
-    
+
     /**
      * Get products with stock > 0 (for POS)
      */
