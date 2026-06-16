@@ -138,7 +138,8 @@ class OrderSaleController extends BaseController
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.id' => 'required|integer|exists:menu_items,id',
+            'items.*.id' => 'required|integer',
+            'items.*.source' => 'required|string|in:Produit,Menu',
             'items.*.name' => 'required|string',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.cost' => 'nullable|numeric|min:0',

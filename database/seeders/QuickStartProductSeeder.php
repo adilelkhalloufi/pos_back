@@ -125,6 +125,22 @@ class QuickStartProductSeeder extends Seeder
                 'codebar' => '5234567890123',
                 'barcodes' => ['5234567890123'],
             ],
+
+                    [
+                'name' => 'COCA COLA 1.5L',
+                'reference' => 'REF-006',
+                'description' => 'Refreshing Coca Cola beverage',
+                'category' => 'Beverages',
+                'unit_symbol' => 'L',
+                'price' => 15.00,
+                'price_buy' => 10.00,
+                'price_sell_1' => 15.00,
+                'stock_alert' => 5,
+                'is_active' => true,
+                'archive' => false,
+                'codebar' => '5234567890123',
+                'barcodes' => ['5234567890123'],
+            ],
         ];
 
         foreach ($products as $item) {
@@ -212,6 +228,7 @@ class QuickStartProductSeeder extends Seeder
                 ['reference' => 'REF-003', 'quantity' => 2, 'price' => 1.20],
                 ['reference' => 'REF-004', 'quantity' => 2, 'price' => 1.80],
                 ['reference' => 'REF-005', 'quantity' => 2, 'price' => 15.00],
+                ['reference' => 'REF-006', 'quantity' => 2, 'price' => 15.00],
             ];
 
             foreach ($purchaseItems as $item) {

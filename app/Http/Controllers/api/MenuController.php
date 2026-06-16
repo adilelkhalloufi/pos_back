@@ -69,8 +69,8 @@ class MenuController extends BaseController
             'type' => 'required|in:breakfast,lunch,dinner,drinks,all_day',
             'is_active' => 'boolean',
             'display_order' => 'nullable|integer',
-            'available_from_time' => 'nullable|date_format:H:i:s',
-            'available_to_time' => 'nullable|date_format:H:i:s',
+            'available_from_time' => 'nullable|date_format:H:i',
+            'available_to_time' => 'nullable|date_format:H:i',
         ]);
 
         try {

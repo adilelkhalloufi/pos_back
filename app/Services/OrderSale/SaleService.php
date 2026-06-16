@@ -392,12 +392,45 @@ class SaleService
                 ->count();
             $orderNumber = str_pad($todayOrderCount + 1, 5, '0', STR_PAD_LEFT);
 
-            // Validate items and prepare order items data
-            $menuItemsData = [];
+            $orderItemsData = [];
             $calculatedTotal = 0;
+            $directProductIds = [];
 
             foreach ($attributes['items'] ?? [] as $item) {
-                // Fetch menu item from database to verify it exists and is available
+                $quantity = $item['qte'] ?? $item['quantity'] ?? 1;
+                $isProductItem = isset($item['source']) && strtolower($item['source']) === 'produit';
+
+                if ($isProductItem) {
+                    $product = \App\Models\Product::where(\App\Models\Product::COL_ID, $item['id'])
+                        ->where(\App\Models\Product::COL_STORE_ID, $storeId)
+                        ->first();
+
+                    if (!$product || !$product->is_active) {
+                        throw new \Exception("Product with ID {$item['id']} not found or inactive");
+                    }
+
+                    if (abs($product->price - $item['price']) > 0.01) {
+                        throw new \Exception("Price mismatch for product '{$product->name}'");
+                    }
+
+                    $itemTotal = $product->price * $quantity;
+                    $calculatedTotal += $itemTotal;
+
+                    $orderItemsData[] = [
+                        'type' => 'product',
+                        'product' => $product,
+                        'quantity' => $quantity,
+                        'price' => $product->price,
+                        'cost' => $product->price_buy ?? 0,
+                        'total' => $itemTotal,
+                        'name' => $item['name'] ?? $product->name,
+                        'category_id' => $item['category_id'] ?? $product->category_id ?? null,
+                    ];
+
+                    $directProductIds[] = $product->id;
+                    continue;
+                }
+
                 $menuItem = \App\Models\MenuItem::with(['recipe', 'product'])->find($item['id']);
 
                 if (!$menuItem) {
@@ -408,16 +441,15 @@ class SaleService
                     throw new \Exception("Menu item '{$menuItem->name}' is not available");
                 }
 
-                // Validate price matches (security check to prevent price manipulation)
                 if (abs($menuItem->price - $item['price']) > 0.01) {
                     throw new \Exception("Price mismatch for menu item '{$menuItem->name}'");
                 }
 
-                $quantity = $item['qte'] ?? $item['quantity'] ?? 1;
                 $itemTotal = $menuItem->price * $quantity;
                 $calculatedTotal += $itemTotal;
 
-                $menuItemsData[] = [
+                $orderItemsData[] = [
+                    'type' => 'menu',
                     'menu_item' => $menuItem,
                     'quantity' => $quantity,
                     'price' => $menuItem->price,
@@ -464,8 +496,39 @@ class SaleService
                 OrderSale::COL_CUSTOMER_ID => $attributes['customer_id'] ?? null,
             ]);
 
-            // Create order items and handle stock deduction
-            foreach ($menuItemsData as $itemData) {
+            // Create order items and handle stock deduction for both products and menu items
+            foreach ($orderItemsData as $itemData) {
+                if ($itemData['type'] === 'product') {
+                    \App\Models\OrderItems::create([
+                        \App\Models\OrderItems::COL_NAME => $itemData['name'],
+                        \App\Models\OrderItems::COL_ORDER_ID => $sale->getId(),
+                        \App\Models\OrderItems::COL_STORE_ID => $storeId,
+                        \App\Models\OrderItems::COL_PRODUCT_ID => $itemData['product']->getId(),
+                        \App\Models\OrderItems::COL_PRODUCT_TYPE => \App\Models\Product::class,
+                        \App\Models\OrderItems::COL_PRICE => $itemData['price'],
+                        \App\Models\OrderItems::COL_QTE => $itemData['quantity'],
+                        \App\Models\OrderItems::COL_TOTAL => $itemData['total'],
+                        \App\Models\OrderItems::COL_CATEGORY_ID => $itemData['category_id'],
+                        \App\Models\OrderItems::COL_INVOICE_PRICE => $itemData['price'],
+                    ]);
+
+                    $this->stockService->processStoreProductMovement([
+                        'product_id' => $itemData['product']->getId(),
+                        'store_id' => $storeId,
+                        'quantity' => $itemData['quantity'],
+                        'type' => 'sale',
+                        'direction' => 'out',
+                        'price' => $itemData['price'],
+                        'unit_cost' => $itemData['price'],
+                        'referenceable_type' => OrderSale::class,
+                        'referenceable_id' => $sale->getId(),
+                        'user_id' => auth()->id(),
+                        'note' => "Sale order: {$orderNumber}",
+                    ]);
+
+                    continue;
+                }
+
                 $menuItem = $itemData['menu_item'];
                 $quantity = $itemData['quantity'];
 
@@ -481,12 +544,7 @@ class SaleService
                     \App\Models\OrderItems::COL_INVOICE_PRICE => $itemData['price'],
                 ]);
 
-                // Use StockDeductionService for proper stock management
-                // This handles: recipe ingredients, unit conversion, waste percentage, 
-                // theoretical consumption, and proper error handling
-                // Note: Only deduct stock for recipe-based and product-based items
-                // Simple items (like delivery fees) don't have stock tracking
-                if (in_array($menuItem->item_type, [\App\Models\MenuItem::ITEM_TYPE_RECIPE, \App\Models\MenuItem::ITEM_TYPE_PRODUCT])) {
+                if (in_array($itemData['item_type'], [\App\Models\MenuItem::ITEM_TYPE_RECIPE, \App\Models\MenuItem::ITEM_TYPE_PRODUCT])) {
                     $this->stockDeductionService->deductMenuItemStock(
                         $menuItem->id,
                         $quantity,
@@ -495,6 +553,10 @@ class SaleService
                         $sale->getId()
                     );
                 }
+            }
+
+            if (!empty($directProductIds)) {
+                $this->alertService->generateProductStockAlertsForProducts(array_unique($directProductIds), $storeId);
             }
 
             // Record payment if advance was made
