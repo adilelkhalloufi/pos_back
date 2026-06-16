@@ -44,6 +44,7 @@ class ProductResource extends JsonResource
             'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],
             'store' => $this->whenLoaded('store') ?? null,
+                'unit' => $this->whenLoaded('unit'),
 
         ];
     }
