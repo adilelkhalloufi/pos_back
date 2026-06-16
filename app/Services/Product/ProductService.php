@@ -31,6 +31,8 @@ class ProductService
             'sales.order' => fn($query) => $query->orderBy('id', 'desc')->limit(3),
             'barcodes',
             'category',
+            'unit',
+             
         ]);
         if (!$product instanceof Product) {
             throw new ProductNotFoundException();
