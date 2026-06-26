@@ -33,6 +33,59 @@ class StoreProductsController extends BaseController
     }
 
     /**
+     * Import products from another store into the current store
+     */
+    public function import(Request $request)
+    {
+        $validated = $request->validate([
+            'source_store_id' => 'required|exists:stores,id',
+            'product_ids' => 'nullable|array|min:1',
+            'product_ids.*' => 'integer|exists:products,id',
+            'products' => 'nullable|array|min:1',
+            'products.*.product_id' => 'required_with:products|integer|exists:products,id',
+        ]);
+
+        $sourceStoreId = (int) $validated['source_store_id'];
+
+        $productIds = collect($validated['product_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->toArray();
+
+        if (isset($validated['products'])) {
+            $productIds = array_merge($productIds, collect($validated['products'])
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->toArray());
+        }
+
+        $productIds = array_values(array_unique($productIds));
+
+        if (empty($productIds)) {
+            return response()->json(['error' => 'No product IDs provided'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($sourceStoreId === $this->storeId()) {
+            return response()->json(['error' => 'Source store must be different from current store'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $storeProducts = $this->storeProductService->importFromStore($sourceStoreId, $productIds);
+
+            return response()->json([
+                'message' => 'Products imported to current store',
+                'store_products' => StoreProductResource::collection($storeProducts),
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to import products',
+                'message' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    /**
      * Get products with stock > 0 (for POS)
      */
     public function inStock(Request $request)
@@ -223,4 +276,5 @@ class StoreProductsController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+
 }

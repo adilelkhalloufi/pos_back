@@ -47,6 +47,21 @@ class StoreProductRepository extends BaseRepository
     }
 
     /**
+     * Find multiple store products by store and product IDs
+     *
+     * @param int $storeId
+     * @param int[] $productIds
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function findByStoreAndProductIds(int $storeId, array $productIds)
+    {
+        return $this->getQueryBuilder()
+            ->where(StoreProducts::COL_STORE_ID, $storeId)
+            ->whereIn(StoreProducts::COL_PRODUCT_ID, $productIds)
+            ->get();
+    }
+
+    /**
      * Get store products with stock greater than zero
      * 
      * @param int $storeId

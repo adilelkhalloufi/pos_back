@@ -58,6 +58,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::post('/users/{id}/change-password', [UserController::class, 'changePassword']);
 
     Route::resource('/products', ProductController::class);
+    
 
     Route::get('/pos', [StoreProductsController::class, 'index']);
 
@@ -134,6 +135,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     // Store Products Routes
     Route::prefix('store-products')->group(function () {
         Route::get('/', [StoreProductsController::class, 'index']);
+        Route::post('/import', [StoreProductsController::class, 'import']);
         Route::get('/{id}', [StoreProductsController::class, 'show']);
         Route::post('/', [StoreProductsController::class, 'store']);
         Route::put('/{id}', [StoreProductsController::class, 'update']);

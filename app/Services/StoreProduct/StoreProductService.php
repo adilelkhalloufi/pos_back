@@ -37,6 +37,49 @@ class StoreProductService
     }
 
     /**
+     * Import products from another store into the current store
+     */
+    public function importFromStore(int $sourceStoreId, array $productIds)
+    {
+        $targetStoreId = currentStoreId();
+
+        if (!$targetStoreId) {
+            throw new \Exception('Current store is not defined');
+        }
+
+        $products = $this->storeProductRepository->findByStoreAndProductIds($sourceStoreId, $productIds);
+
+        if ($products->isEmpty()) {
+            throw new \Exception('No products found in source store for the provided IDs');
+        }
+
+        $imported = [];
+
+        foreach ($products as $sourceStoreProduct) {
+            $storeProduct = $this->storeProductRepository->findByStoreAndProduct($targetStoreId, $sourceStoreProduct->{StoreProducts::COL_PRODUCT_ID});
+
+            if ($storeProduct) {
+                $storeProduct->update([
+                    StoreProducts::COL_PRICE => $sourceStoreProduct->{StoreProducts::COL_PRICE},
+                    StoreProducts::COL_COST => $sourceStoreProduct->{StoreProducts::COL_COST},
+                ]);
+            } else {
+                $storeProduct = StoreProducts::create([
+                    StoreProducts::COL_STORE_ID => $targetStoreId,
+                    StoreProducts::COL_PRODUCT_ID => $sourceStoreProduct->{StoreProducts::COL_PRODUCT_ID},
+                    StoreProducts::COL_PRICE => $sourceStoreProduct->{StoreProducts::COL_PRICE},
+                    StoreProducts::COL_COST => $sourceStoreProduct->{StoreProducts::COL_COST},
+                    StoreProducts::COL_STOCK => 0,
+                ]);
+            }
+
+            $imported[] = $storeProduct;
+        }
+
+        return collect($imported);
+    }
+
+    /**
      * Get in-stock products for a store (for POS)
      */
     public function getInStockProducts(int $storeId, ?string $search = null)
