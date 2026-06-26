@@ -103,6 +103,37 @@ class InventaryController extends BaseController
     }
 
     /**
+     * Add a new product item to the inventory
+     */
+    public function addItem(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'inventory_id' => 'nullable|integer',
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
+
+        if (isset($validated['inventory_id']) && $validated['inventory_id'] != $id) {
+            return response()->json([
+                'error' => 'Inventory ID in the body must match the route ID'
+            ], 400);
+        }
+
+        try {
+            $item = $this->inventaryService->addItem($id, $validated['product_id']);
+
+            return response()->json([
+                'message' => 'Product added to inventory successfully',
+                'data' => $item
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to add product to inventory',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Update an inventory item
      */
     public function updateItem(Request $request, $id, $itemId)

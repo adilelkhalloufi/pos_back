@@ -99,6 +99,58 @@ class InventaryService
     }
 
     /**
+     * Add a product to the inventory
+     */
+    public function addItem(int $inventaryId, int $productId): InventaryItem
+    {
+        return DB::transaction(function () use ($inventaryId, $productId) {
+            $inventary = $this->inventaryRepository->find($inventaryId);
+
+            if (!$inventary) {
+                throw new \Exception('Inventory not found');
+            }
+
+            if (! in_array($inventary->status, ['pending', 'in_progress'], true)) {
+                throw new \Exception('Only pending or in-progress inventories can be updated');
+            }
+
+            $existingItem = InventaryItem::where(InventaryItem::COL_INVENTARY_ID, $inventaryId)
+                ->where(InventaryItem::COL_PRODUCT_ID, $productId)
+                ->first();
+
+            if ($existingItem) {
+                return $existingItem;
+            }
+
+            $storeId = currentStoreId();
+            if (! $storeId) {
+                throw new \Exception('Store not found for current user');
+            }
+
+            $storeProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $storeId)
+                ->where(StoreProducts::COL_PRODUCT_ID, $productId)
+                ->first();
+
+            if (! $storeProduct) {
+                throw new \Exception('Product not found in current store inventory');
+            }
+
+            $expectedQuantity = $storeProduct->{StoreProducts::COL_STOCK} ?: 0;
+
+            $item = InventaryItem::create([
+                InventaryItem::COL_INVENTARY_ID => $inventaryId,
+                InventaryItem::COL_PRODUCT_ID => $productId,
+                InventaryItem::COL_EXPECTED_QUANTITY => $expectedQuantity,
+                InventaryItem::COL_STATUS => 'pending',
+            ]);
+
+            $inventary->increment(Inventary::COL_TOTAL_ITEMS);
+
+            return $item->load('product');
+        });
+    }
+
+    /**
      * Update inventory item
      */
     public function updateItem(int $inventaryId, int $itemId, array $attributes): InventaryItem
@@ -106,10 +158,6 @@ class InventaryService
         $item = InventaryItem::where('id', $itemId)
             ->where('inventary_id', $inventaryId)
             ->first();
-
-        if (!$item) {
-            throw new \Exception('Inventory item not found');
-        }
 
         $actualQuantity = $attributes['actual_quantity'];
         $difference = $actualQuantity - $item->expected_quantity;

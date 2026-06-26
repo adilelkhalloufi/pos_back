@@ -79,18 +79,18 @@ class ProductService
         ]);
 
         // Propagate to all stores owned by same owner
-        $relatedStores = $this->storeRepository->findbyfield(currentStore()->owner_id, Store::COL_OWNER_ID);
+        // $relatedStores = $this->storeRepository->findbyfield(currentStore()->owner_id, Store::COL_OWNER_ID);
 
-        foreach ($relatedStores as $store) {
-            if ($store->id != currentStoreId()) {
-                StoreProducts::create([
-                    StoreProducts::COL_STORE_ID   => $store->id,
-                    StoreProducts::COL_PRODUCT_ID => $product->id,
-                    StoreProducts::COL_PRICE      => $sellPrice,
-                    StoreProducts::COL_STOCK      => 0,
-                ]);
-            }
-        }
+        // foreach ($relatedStores as $store) {
+        //     if ($store->id != currentStoreId()) {
+        //         StoreProducts::create([
+        //             StoreProducts::COL_STORE_ID   => $store->id,
+        //             StoreProducts::COL_PRODUCT_ID => $product->id,
+        //             StoreProducts::COL_PRICE      => $sellPrice,
+        //             StoreProducts::COL_STOCK      => 0,
+        //         ]);
+        //     }
+        // }
 
         // Handle barcodes - collect from both codebar and barcodes array
         $barcodesToSave = [];

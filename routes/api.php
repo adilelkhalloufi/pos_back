@@ -153,6 +153,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::put('/adjustments/{id}/cancel', [AjustementController::class, 'cancel']);
 
         Route::resource('/inventories', InventaryController::class);
+        Route::post('/inventories/{id}/items', [InventaryController::class, 'addItem']);
         Route::put('/inventories/{id}/start', [InventaryController::class, 'start']);
         Route::put('/inventories/{id}/items/{itemId}', [InventaryController::class, 'updateItem']);
         Route::put('/inventories/{id}/complete', [InventaryController::class, 'complete']);
