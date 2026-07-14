@@ -13,6 +13,7 @@ use App\Repositories\Purchase\PurchaseRepository;
 use App\Services\Setting\SettingService;
 use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PurchaseDeliveryService
 {
@@ -144,7 +145,7 @@ class PurchaseDeliveryService
      */
     public function validateDelivery(int $deliveryId): PurchaseDelivery
     {
-        return DB::transaction(function () use ($deliveryId) {
+        $delivery = DB::transaction(function () use ($deliveryId) {
             $delivery = $this->deliveryRepository->find($deliveryId);
 
             if (!$delivery) {
@@ -155,9 +156,14 @@ class PurchaseDeliveryService
                 throw new \Exception('Only draft deliveries can be validated');
             }
 
+            $productIds = [];
+            
             // Update stock for each delivery item
             foreach ($delivery->deliveryItems as $item) {
-                // Update stock using StockService
+                // Track product IDs for batch alert checking
+                $productIds[] = $item->product_id;
+                
+                // Update stock using StockService (skip per-item alerts, batch them after)
                 $this->stockService->processStoreProductMovement([
                     StockMovement::COL_STORE_ID => $delivery->store_id,
                     StockMovement::COL_PRODUCT_ID => $item->product_id,
@@ -170,7 +176,7 @@ class PurchaseDeliveryService
                     StockMovement::COL_REFERENCEABLE_ID => $delivery->id,
                     StockMovement::COL_USER_ID => auth()->id(),
                     StockMovement::COL_NOTE => 'Delivery validated: ' . $delivery->delivery_number,
-                ]);
+                ], skipAlerts: true);
 
                 // Update purchase item received quantity
                 $purchaseItem = $item->orderPurchaseItem;
@@ -187,9 +193,28 @@ class PurchaseDeliveryService
 
             // Check and update purchase order completeness
             $this->checkOrderCompleteness($delivery->order_purchase_id);
+            
+            // Store product IDs for alert checking outside transaction
+            $delivery->_productIds = array_unique($productIds);
 
             return $delivery->fresh(['deliveryItems.product', 'orderPurchase']);
         });
+        
+        // Batch check alerts for all affected products AFTER transaction completes
+        // This prevents alert generation from slowing down the critical stock update transaction
+        if (!empty($delivery->_productIds)) {
+            try {
+                $this->stockService->checkStockAlertsForProducts($delivery->store_id, $delivery->_productIds);
+            } catch (\Exception $e) {
+                // Log but don't fail - alerts are not critical
+                Log::warning('Failed to check stock alerts after delivery validation', [
+                    'delivery_id' => $delivery->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        return $delivery;
     }
 
     /**

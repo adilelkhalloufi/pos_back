@@ -126,7 +126,7 @@ class StockService
         return $query->paginate($perPage);
     }
 
-    public function processStoreProductMovement(array $data): StockMovement
+    public function processStoreProductMovement(array $data, bool $skipAlerts = false): StockMovement
     {
         $storeId = $data['store_id'];
         $productId = $data['product_id'];
@@ -184,7 +184,10 @@ class StockService
             ]);
         });
 
-        $this->checkStockAlertsAfterMovement($storeId, $productId);
+        // Only check alerts if not explicitly skipped (for batch operations)
+        if (!$skipAlerts) {
+            $this->checkStockAlertsAfterMovement($storeId, $productId);
+        }
 
         return $stockMovement;
     }
@@ -194,9 +197,18 @@ class StockService
      */
     private function checkStockAlertsAfterMovement(int $storeId, int $productId): void
     {
-        // Generate product stock alerts for this specific store
-        // This will check all products in the store, but it's efficient enough
-        // since it's only called after actual stock changes
-        $this->alertService->generateProductStockAlerts($storeId);
+        // Generate alert for only this specific product to avoid N+1 queries
+        $this->alertService->generateProductStockAlertsForProducts([$productId], $storeId);
+    }
+
+    /**
+     * Batch check stock alerts for multiple products
+     */
+    public function checkStockAlertsForProducts(int $storeId, array $productIds): void
+    {
+        if (empty($productIds)) {
+            return;
+        }
+        $this->alertService->generateProductStockAlertsForProducts($productIds, $storeId);
     }
 }
