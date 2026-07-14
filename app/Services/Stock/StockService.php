@@ -128,48 +128,42 @@ class StockService
 
     public function processStoreProductMovement(array $data): StockMovement
     {
-        return DB::transaction(function () use ($data) {
-            $storeId = $data['store_id'];
-            $productId = $data['product_id'];
-            $quantity = $data['quantity'];
-            $type = $data['type']; // 'sale', 'purchase', 'adjustment', 'transfer'
+        $storeId = $data['store_id'];
+        $productId = $data['product_id'];
+        $quantity = $data['quantity'];
+        $type = $data['type']; // 'sale', 'purchase', 'adjustment', 'transfer'
 
-            // Find or create StoreProduct record
-            $storeProduct = StoreProducts::firstOrCreate(
-                [
+        $stockMovement = DB::transaction(function () use ($data, $storeId, $productId, $quantity, $type) {
+            // Lock the specific store-product row before updating it.
+            $storeProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $storeId)
+                ->where(StoreProducts::COL_PRODUCT_ID, $productId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$storeProduct) {
+                $storeProduct = StoreProducts::create([
                     StoreProducts::COL_STORE_ID => $storeId,
                     StoreProducts::COL_PRODUCT_ID => $productId,
-                ],
-                [
                     StoreProducts::COL_STOCK => 0,
                     StoreProducts::COL_PRICE => $data['price'] ?? 0,
                     StoreProducts::COL_COST => $data['cost'] ?? 0,
-                ]
-            );
+                ]);
+            }
 
-            // Get previous stock quantity
             $previousStock = $storeProduct->{StoreProducts::COL_STOCK};
-
-            // Calculate new stock based on movement type and direction
             $direction = $data['direction'] ?? ($type === 'sale' || $type === 'exit' ? 'out' : 'in');
-
             $newStock = match ($type) {
                 'sale', 'exit' => $previousStock - $quantity, // Subtract for outgoing
                 'purchase', 'entry' => $previousStock + $quantity, // Add for incoming
-                'adjustment' => $direction === 'in' ? $previousStock + $quantity : $previousStock - $quantity, // Add or subtract based on direction
+                'adjustment' => $direction === 'in' ? $previousStock + $quantity : $previousStock - $quantity,
                 default => $previousStock,
             };
 
-            // Update stock quantity
             $storeProduct->update([
                 StoreProducts::COL_STOCK => $newStock,
                 StoreProducts::COL_COST => $data['cost'] ?? $storeProduct->{StoreProducts::COL_COST},
             ]);
 
-            // Check for stock alerts after stock change
-            $this->checkStockAlertsAfterMovement($storeId, $productId);
-
-            // Create stock movement record
             return StockMovement::create([
                 StockMovement::COL_PRODUCT_ID => $productId,
                 StockMovement::COL_SOURCE_STORE_ID => $storeId,
@@ -189,6 +183,10 @@ class StockService
                 StockMovement::COL_META => $data['meta'] ?? null,
             ]);
         });
+
+        $this->checkStockAlertsAfterMovement($storeId, $productId);
+
+        return $stockMovement;
     }
 
     /**
