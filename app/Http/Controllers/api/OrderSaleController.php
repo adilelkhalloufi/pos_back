@@ -55,6 +55,11 @@ class OrderSaleController extends BaseController
             $query->where(OrderSale::COL_STATUS, $request->input('status'));
         }
 
+        // Filter by vendor (user) if vendor parameter is present
+        if ($request->has('vendor')) {
+            $query->where(OrderSale::COL_USER_ID, $request->input('vendor'));
+        }
+
         $query = $this->applyDateFilter($query, $request, 1000);
         $orders = $query->get();
         return response()->json(OrderResource::collection($orders), Response::HTTP_OK);
