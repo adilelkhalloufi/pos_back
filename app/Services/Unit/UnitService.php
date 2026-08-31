@@ -8,9 +8,7 @@ class UnitService
 {
     public function all(int $storeId)
     {
-        return Unit::where(Unit::COL_STORE_ID, $storeId)
-            ->orWhereNull(Unit::COL_STORE_ID)
-            ->orderBy(Unit::COL_NAME)
+        return Unit::orderBy(Unit::COL_NAME)
             ->get();
     }
 
