@@ -32,6 +32,9 @@ class ProductResource extends JsonResource
             Product::COL_CREATED_AT => $this->created_at,
             Product::COL_PRICE_BUY => (float) $this->price_buy,
             Product::COL_PRICE_SELL_1 => (float) $this->price_sell_1,
+            Product::COL_PRODUCT_TYPE => $this->product_type,
+            Product::COL_UNIT_ID => $this->unit_id,
+            Product::COL_SELL_UNIT_ID => $this->sell_unit_id,
             OrderItems::COL_PRODUCT_ID => $this->id, // this for order items
             Product::COL_CATEGORY_ID => $this->category_id,
             AUTOCOMPLETE::VALUE->value => $this->id,
@@ -44,7 +47,26 @@ class ProductResource extends JsonResource
             'sales' => $this->whenLoaded('sales') ?? [],
             'purchases' => $this->whenLoaded('purchases') ?? [],
             'store' => $this->whenLoaded('store') ?? null,
-                'unit' => $this->whenLoaded('unit'),
+            'unit' => $this->whenLoaded('unit'),
+            'sell_unit' => $this->whenLoaded('sellUnit'),
+            'components' => $this->whenLoaded('components', function () {
+                return $this->components->map(function ($component) {
+                    return [
+                        'id' => $component->id,
+                        'product_id' => $component->product_id,
+                        'component_id' => $component->component_id,
+                        'quantity' => (float) $component->quantity,
+                        'unit_id' => $component->unit_id,
+                        'note' => $component->note,
+                        'component' => $component->relationLoaded('component') ? [
+                            'id' => $component->component?->id,
+                            'name' => $component->component?->name,
+                            'price_buy' => $component->component?->price_buy,
+                        ] : null,
+                        'unit' => $component->relationLoaded('unit') ? $component->unit : null,
+                    ];
+                })->values();
+            }, []),
 
         ];
     }

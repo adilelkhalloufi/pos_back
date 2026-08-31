@@ -3,6 +3,7 @@
 namespace App\Services\Product;
 
 use App\Models\Product;
+use App\Models\ProductComponent;
 use App\Models\Store;
 use App\Models\StoreProducts;
 use App\Models\PriceChangeLog;
@@ -32,6 +33,9 @@ class ProductService
             'barcodes',
             'category',
             'unit',
+            'sellUnit',
+            'components.component',
+            'components.unit',
              
         ]);
         if (!$product instanceof Product) {
@@ -51,6 +55,9 @@ class ProductService
             $attributes[Product::COL_IMAGE] = $imagePath;
         }
 
+        $components = $attributes['components'] ?? [];
+        $resolvedType = $attributes['product_type'] ?? (!empty($components) ? Product::TYPE_COMPONENT : Product::TYPE_NORMAL);
+
         $product = $this->productRepository->create([
             Product::COL_NAME             => $attributes[Product::COL_NAME],
             Product::COL_DESCRIPTION      => $attributes[Product::COL_DESCRIPTION] ?? null,
@@ -64,11 +71,15 @@ class ProductService
             Product::COL_STOCK_ALERT        => $attributes[Product::COL_STOCK_ALERT] ?? null,
             Product::COL_IS_ACTIVE        => $attributes[Product::COL_IS_ACTIVE] ?? true,
             Product::COL_IS_STOCKABLE     => $attributes['is_stockable'] ?? true,
+            Product::COL_PRODUCT_TYPE     => $resolvedType,
             Product::COL_UNIT_ID          => $attributes['unit_id'] ?? null,
+            Product::COL_SELL_UNIT_ID     => $attributes['sell_unit_id'] ?? ($attributes['unit_id'] ?? null),
             Product::COL_PRINT_PROFILE_ID => $attributes['print_profile_id'] ?? null,
             Product::COL_USER_ID          => auth()->id(),
             Product::COL_STORE_ID         => currentStoreId(),
         ]);
+
+        $this->syncComponents($product->id, $components);
 
         $sellPrice = $attributes['price_sell_1'] ?? $attributes[Product::COL_PRICE] ?? null;
 
@@ -134,7 +145,7 @@ class ProductService
             ]);
         }
 
-        return $product;
+        return $product->fresh(['unit', 'sellUnit', 'components.component', 'components.unit']);
     }
 
     public function update(int $id, array $attributes): ?Product
@@ -145,6 +156,11 @@ class ProductService
         if (!$product instanceof Product) {
             throw new ProductNotFoundException();
         }
+        $components = $attributes['components'] ?? null;
+
+        $resolvedType = $attributes['product_type']
+            ?? (is_array($components) ? (!empty($components) ? Product::TYPE_COMPONENT : Product::TYPE_NORMAL) : $product->product_type);
+
         $this->productRepository->update($id, [
             Product::COL_NAME             => $attributes[Product::COL_NAME] ?? $product->name,
             Product::COL_REFERENCE        => $attributes[Product::COL_REFERENCE] ?? $product->reference,
@@ -159,10 +175,16 @@ class ProductService
             Product::COL_ARCHIVE          => (bool) ($attributes[Product::COL_ARCHIVE] ?? $product->archive),
             Product::COL_IS_ACTIVE        => (bool) ($attributes[Product::COL_IS_ACTIVE] ?? $product->is_active),
             Product::COL_IS_STOCKABLE     => (bool) ($attributes['is_stockable'] ?? $product->is_stockable),
+            Product::COL_PRODUCT_TYPE     => $resolvedType,
             Product::COL_CATEGORY_ID      => $attributes[Product::COL_CATEGORY_ID] ?? $product->category_id,
             Product::COL_UNIT_ID          => $attributes['unit_id'] ?? $product->unit_id,
+            Product::COL_SELL_UNIT_ID     => $attributes['sell_unit_id'] ?? $product->sell_unit_id,
             Product::COL_PRINT_PROFILE_ID => $attributes['print_profile_id'] ?? $product->print_profile_id,
         ]);
+
+        if (is_array($components)) {
+            $this->syncComponents($id, $components);
+        }
 
         // Log price changes if any price field changed
         $priceFields = ['price_buy', 'price_sell_1'];
@@ -232,7 +254,7 @@ class ProductService
             }
         }
 
-        return $fresh;
+        return $fresh?->fresh(['unit', 'sellUnit', 'components.component', 'components.unit']);
     }
 
     /**
@@ -245,5 +267,28 @@ class ProductService
     public function getProductsForPOS(int $storeId, ?string $search = null)
     {
         return $this->productRepository->getProductsForPOS($storeId, $search);
+    }
+
+    private function syncComponents(int $productId, array $components): void
+    {
+        ProductComponent::where(ProductComponent::COL_PRODUCT_ID, $productId)->delete();
+
+        foreach ($components as $component) {
+            if (!isset($component[ProductComponent::COL_COMPONENT_ID], $component[ProductComponent::COL_QUANTITY])) {
+                continue;
+            }
+
+            if ((int) $component[ProductComponent::COL_COMPONENT_ID] === $productId) {
+                continue;
+            }
+
+            ProductComponent::create([
+                ProductComponent::COL_PRODUCT_ID => $productId,
+                ProductComponent::COL_COMPONENT_ID => $component[ProductComponent::COL_COMPONENT_ID],
+                ProductComponent::COL_QUANTITY => $component[ProductComponent::COL_QUANTITY],
+                ProductComponent::COL_UNIT_ID => $component[ProductComponent::COL_UNIT_ID] ?? null,
+                ProductComponent::COL_NOTE => $component[ProductComponent::COL_NOTE] ?? null,
+            ]);
+        }
     }
 }

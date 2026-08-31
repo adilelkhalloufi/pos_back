@@ -35,6 +35,14 @@ class ProductRequest extends FormRequest
                 $this->merge(['barcodes' => array_filter($barcodes)]);
             }
         }
+
+        // Allow components payload to be sent as JSON string.
+        if ($this->has('components') && is_string($this->components)) {
+            $decoded = json_decode($this->components, true);
+            if (is_array($decoded)) {
+                $this->merge(['components' => $decoded]);
+            }
+        }
     }
 
     /**
@@ -60,11 +68,20 @@ class ProductRequest extends FormRequest
             'stock_alert'      => 'nullable|integer',
              'is_active'        => 'nullable',
             'is_stockable'     => 'nullable|boolean',
+            'product_type'     => 'nullable|in:normal,component',
             'archive'          => 'nullable',
             'quantity'         => 'nullable|integer|min:0',
              'category_id'      => 'nullable|integer|exists:categories,id',
             'unit_id'          => 'nullable|integer|exists:units,id',
+            'sell_unit_id'     => 'nullable|integer|exists:units,id',
             'print_profile_id' => 'nullable|integer|exists:print_profiles,id',
+
+            // Product components (recipe/ingredients under product)
+            'components' => 'nullable|array|required_if:product_type,component',
+            'components.*.component_id' => 'required|integer|exists:products,id',
+            'components.*.quantity' => 'required|numeric|min:0.0001',
+            'components.*.unit_id' => 'nullable|integer|exists:units,id',
+            'components.*.note' => 'nullable|string|max:255',
         ];
     }
 

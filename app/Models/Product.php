@@ -23,10 +23,12 @@ class Product extends BaseModel
 
         'is_active',
         'is_stockable',
+        'product_type',
         'archive',
         'quantity',
         'category_id',
         'unit_id',
+        'sell_unit_id',
         'print_profile_id',
         'user_id',
         'store_id',
@@ -69,7 +71,15 @@ class Product extends BaseModel
 
     public const COL_IS_STOCKABLE = 'is_stockable';
 
+    public const COL_PRODUCT_TYPE = 'product_type';
+
+    public const TYPE_NORMAL = 'normal';
+
+    public const TYPE_COMPONENT = 'component';
+
     public const COL_UNIT_ID = 'unit_id';
+
+    public const COL_SELL_UNIT_ID = 'sell_unit_id';
 
     public const COL_PRINT_PROFILE_ID = 'print_profile_id';
 
@@ -80,6 +90,7 @@ class Product extends BaseModel
         self::COL_PRICE_SELL_1 => 'float',
         self::COL_IS_ACTIVE => 'boolean',
         self::COL_IS_STOCKABLE => 'boolean',
+        self::COL_PRODUCT_TYPE => 'string',
         self::COL_ARCHIVE => 'boolean',
         self::COL_STOCK_ALERT => 'integer',
     ];
@@ -123,6 +134,11 @@ class Product extends BaseModel
     public function unit()
     {
         return $this->belongsTo(Unit::class,self::COL_UNIT_ID, Unit::COL_ID);
+    }
+
+    public function sellUnit()
+    {
+        return $this->belongsTo(Unit::class, self::COL_SELL_UNIT_ID, Unit::COL_ID);
     }
 
     public function printProfile()

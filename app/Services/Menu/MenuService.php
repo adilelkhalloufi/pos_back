@@ -5,7 +5,6 @@ namespace App\Services\Menu;
 use App\Models\Menu;
 use App\Models\MenuCategory;
 use App\Models\MenuItem;
-use App\Models\Recipe;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Exception;
@@ -121,7 +120,7 @@ class MenuService
 
             DB::commit();
 
-            return $category->fresh(['items.recipe']);
+            return $category->fresh(['items.product']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -191,21 +190,17 @@ class MenuService
                 'description' => $itemData['description'] ?? null,
                 'image' => $itemData['image'] ?? null,
                 'price' => $itemData['price'],
-                'cost' => 0, // Will be calculated if recipe/product linked
+                'cost' => 0,
                 'is_active' => $itemData['is_active'] ?? true,
                 'is_available' => $itemData['is_available'] ?? true,
                 'preparation_time_minutes' => $itemData['preparation_time_minutes'] ?? null,
-                'item_type' => $itemData['item_type'] ?? MenuItem::ITEM_TYPE_RECIPE,
-                'recipe_id' => $itemData['recipe_id'] ?? null,
+                'item_type' => $itemData['item_type'] ?? MenuItem::ITEM_TYPE_PRODUCT,
                 'product_id' => $itemData['product_id'] ?? null,
                 'store_id' => $itemData['store_id'],
                 'display_order' => $itemData['display_order'] ?? 0,
             ]);
 
-            // If recipe is linked, update cost from recipe
-            if ($item->item_type === MenuItem::ITEM_TYPE_RECIPE && $item->recipe_id) {
-                $item->updateCostFromRecipe();
-            } elseif ($item->item_type === MenuItem::ITEM_TYPE_PRODUCT && $item->product_id) {
+            if ($item->item_type === MenuItem::ITEM_TYPE_PRODUCT && $item->product_id) {
                 // If product is linked, update cost from product
                 $item->updateCostFromProduct();
             } elseif (isset($itemData['cost'])) {
@@ -215,7 +210,7 @@ class MenuService
 
             DB::commit();
 
-            return $item->fresh(['recipe', 'product', 'category']);
+            return $item->fresh(['product', 'category']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -246,17 +241,13 @@ class MenuService
                 'is_available' => $itemData['is_available'] ?? $item->is_available,
                 'preparation_time_minutes' => $itemData['preparation_time_minutes'] ?? $item->preparation_time_minutes,
                 'item_type' => $itemData['item_type'] ?? $item->item_type,
-                'recipe_id' => $itemData['recipe_id'] ?? $item->recipe_id,
                 'product_id' => $itemData['product_id'] ?? $item->product_id,
                 'display_order' => $itemData['display_order'] ?? $item->display_order,
             ], function ($value) {
                 return $value !== null;
             }));
 
-            // Update cost if recipe changed or manual cost provided
-            if (isset($itemData['recipe_id']) && $item->item_type === MenuItem::ITEM_TYPE_RECIPE) {
-                $item->updateCostFromRecipe();
-            } elseif (isset($itemData['product_id']) && $item->item_type === MenuItem::ITEM_TYPE_PRODUCT) {
+            if (isset($itemData['product_id']) && $item->item_type === MenuItem::ITEM_TYPE_PRODUCT) {
                 $item->updateCostFromProduct();
             } elseif (isset($itemData['cost'])) {
                 $item->update(['cost' => $itemData['cost']]);
@@ -264,7 +255,7 @@ class MenuService
 
             DB::commit();
 
-            return $item->fresh(['recipe', 'product', 'category']);
+            return $item->fresh(['product', 'category']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -310,7 +301,7 @@ class MenuService
                 }
                 $query->orderBy('display_order');
             },
-            'categories.items.recipe'
+            'categories.items.product'
         ])->findOrFail($menuId);
 
         return $menu;
@@ -356,7 +347,7 @@ class MenuService
      */
     public function calculateItemProfitability(int $itemId): array
     {
-        $item = MenuItem::with('recipe')->findOrFail($itemId);
+        $item = MenuItem::findOrFail($itemId);
 
         return [
             'item_id' => $item->id,
@@ -366,32 +357,9 @@ class MenuService
             'profit_margin' => $item->profit_margin,
             'profit_margin_percentage' => $item->profit_margin_percentage,
             'food_cost_percentage' => $item->food_cost_percentage,
-            'recipe_linked' => $item->recipe_id !== null,
-            'recipe_name' => $item->recipe?->name,
+            'product_linked' => $item->product_id !== null,
+            'product_name' => $item->product?->name,
         ];
-    }
-
-    /**
-     * Update costs for all menu items linked to a recipe
-     * This should be called when recipe costs change
-     * 
-     * @param int $recipeId
-     * @return int Number of items updated
-     */
-    public function updateMenuItemCostsForRecipe(int $recipeId): int
-    {
-        $items = MenuItem::where('recipe_id', $recipeId)
-            ->where('item_type', MenuItem::ITEM_TYPE_RECIPE)
-            ->get();
-
-        $updated = 0;
-        foreach ($items as $item) {
-            if ($item->updateCostFromRecipe()) {
-                $updated++;
-            }
-        }
-
-        return $updated;
     }
 
     /**
@@ -403,7 +371,7 @@ class MenuService
      */
     public function getItemsByProfitability(int $storeId, string $orderBy = 'profit'): Collection
     {
-        $items = MenuItem::with(['recipe', 'category'])
+        $items = MenuItem::with(['product', 'category'])
             ->where('store_id', $storeId)
             ->where('is_active', true)
             ->get();
@@ -452,8 +420,8 @@ class MenuService
             ->where('is_available', true)
             ->count();
 
-        $recipeBasedItems = MenuItem::where('store_id', $storeId)
-            ->where('item_type', MenuItem::ITEM_TYPE_RECIPE)
+        $productBasedItems = MenuItem::where('store_id', $storeId)
+            ->where('item_type', MenuItem::ITEM_TYPE_PRODUCT)
             ->count();
 
         $averageFoodCost = MenuItem::where('store_id', $storeId)
@@ -469,7 +437,7 @@ class MenuService
             'total_items' => $totalItems,
             'active_items' => $activeItems,
             'available_items' => $availableItems,
-            'recipe_based_items' => $recipeBasedItems,
+            'product_based_items' => $productBasedItems,
             'average_food_cost_percentage' => round($averageFoodCost ?? 0, 2),
         ];
     }

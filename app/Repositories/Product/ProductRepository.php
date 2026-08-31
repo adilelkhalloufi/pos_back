@@ -26,6 +26,7 @@ class ProductRepository extends BaseRepository
             ->with([
                 'category',
                 'unit',
+                'sellUnit',
                 'store' => function ($query) use ($storeId) {
                     $query->where(StoreProducts::COL_STORE_ID, $storeId);
                 }

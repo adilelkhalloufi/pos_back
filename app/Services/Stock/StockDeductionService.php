@@ -3,6 +3,8 @@
 namespace App\Services\Stock;
 
 use App\Models\MenuItem;
+use App\Models\Product;
+use App\Models\ProductComponent;
 use App\Models\Recipe;
 use App\Models\RecipeIngredient;
 use App\Models\StoreProducts;
@@ -155,6 +157,167 @@ class StockDeductionService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Deduct stock for direct product sale.
+     * Supports:
+     * - normal product with stock unit == sell unit
+     * - normal product with stock unit != sell unit (uses unit conversions)
+     * - composed product (deducts components recursively)
+     */
+    public function deductProductStock(
+        int $productId,
+        float $quantitySold,
+        int $storeId,
+        int $userId,
+        $orderSaleId = null
+    ): array {
+        DB::beginTransaction();
+
+        try {
+            $deductions = [];
+            $this->deductProductNode(
+                productId: $productId,
+                quantityInSellUnit: $quantitySold,
+                storeId: $storeId,
+                userId: $userId,
+                orderSaleId: $orderSaleId,
+                path: [],
+                deductions: $deductions,
+                context: 'order_product'
+            );
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'product_id' => $productId,
+                'quantity_sold' => $quantitySold,
+                'deductions' => $deductions,
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    protected function deductProductNode(
+        int $productId,
+        float $quantityInSellUnit,
+        int $storeId,
+        int $userId,
+        $orderSaleId,
+        array $path,
+        array &$deductions,
+        string $context
+    ): void {
+        if (in_array($productId, $path, true)) {
+            throw new Exception('Circular product component graph detected for product ID ' . $productId);
+        }
+
+        $product = Product::with(['components'])->findOrFail($productId);
+        $path[] = $productId;
+
+        $isComposed = ($product->product_type === Product::TYPE_COMPONENT)
+            || $product->components->isNotEmpty();
+
+        if ($isComposed) {
+            foreach ($product->components as $component) {
+                $componentQtyInDefinition = (float) $component->quantity * $quantityInSellUnit;
+                $componentProduct = Product::findOrFail($component->component_id);
+
+                $fromUnitId = $component->unit_id ?: $componentProduct->unit_id;
+                $toSellUnitId = $componentProduct->sell_unit_id ?: $componentProduct->unit_id;
+
+                $componentQtyInSellUnit = $componentQtyInDefinition;
+                if ($fromUnitId && $toSellUnitId && $fromUnitId !== $toSellUnitId) {
+                    $componentQtyInSellUnit = $this->conversionService->convert(
+                        $componentQtyInDefinition,
+                        $fromUnitId,
+                        $toSellUnitId,
+                        $storeId
+                    );
+                }
+
+                $this->deductProductNode(
+                    productId: $component->component_id,
+                    quantityInSellUnit: $componentQtyInSellUnit,
+                    storeId: $storeId,
+                    userId: $userId,
+                    orderSaleId: $orderSaleId,
+                    path: $path,
+                    deductions: $deductions,
+                    context: 'component_of_' . $product->id
+                );
+            }
+
+            return;
+        }
+
+        $stockUnitId = $product->unit_id;
+        $sellUnitId = $product->sell_unit_id ?: $product->unit_id;
+
+        $quantityToDeduct = $quantityInSellUnit;
+        if ($stockUnitId && $sellUnitId && $stockUnitId !== $sellUnitId) {
+            $quantityToDeduct = $this->conversionService->convert(
+                $quantityInSellUnit,
+                $sellUnitId,
+                $stockUnitId,
+                $storeId
+            );
+        }
+
+        $storeProduct = StoreProducts::where('product_id', $product->id)
+            ->where('store_id', $storeId)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$storeProduct) {
+            throw new Exception("Product '{$product->name}' not available in store.");
+        }
+
+        if ((float) $storeProduct->stock < (float) $quantityToDeduct) {
+            throw new Exception(
+                "Insufficient stock for '{$product->name}'. Required: {$quantityToDeduct}, Available: {$storeProduct->stock}"
+            );
+        }
+
+        $unitCost = $this->costingService->getCurrentAverageCost($product->id, $storeId);
+
+        $storeProduct->decrement('stock', $quantityToDeduct);
+
+        StockMovement::create([
+            'product_id' => $product->id,
+            'store_id' => $storeId,
+            'type' => 'sale',
+            'direction' => 'out',
+            'quantity' => $quantityToDeduct,
+            'unit_cost' => $unitCost,
+            'total_cost' => $quantityToDeduct * $unitCost,
+            'user_id' => $userId,
+            'referenceable_type' => 'App\\Models\\OrderSale',
+            'referenceable_id' => $orderSaleId,
+            'note' => "Auto-deduction for {$context}: {$product->name}",
+        ]);
+
+        $this->updateTheoreticalConsumption(
+            $product->id,
+            $storeId,
+            $quantityToDeduct,
+            now()->toDateString()
+        );
+
+        $deductions[] = [
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'context' => $context,
+            'sold_quantity' => $quantityInSellUnit,
+            'sold_unit_id' => $sellUnitId,
+            'deducted_quantity' => $quantityToDeduct,
+            'stock_unit_id' => $stockUnitId,
+            'remaining_stock' => (float) $storeProduct->fresh()->stock,
+        ];
     }
 
     /**

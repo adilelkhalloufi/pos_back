@@ -35,6 +35,9 @@ class POSResource extends JsonResource
             Product::COL_DESCRIPTION => $this->description,
             Product::COL_PRICE =>  (float) $this->price,
             Product::COL_PRICE_SELL_1 => (float) $this->price_sell_1,
+            Product::COL_PRODUCT_TYPE => $this->product_type,
+            Product::COL_UNIT_ID => $this->unit_id,
+            Product::COL_SELL_UNIT_ID => $this->sell_unit_id,
             Product::COL_IMAGE => $this->image ? asset('storage/' . $this->image) : null,
             Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->id, // this for order items

@@ -79,8 +79,8 @@ class MenuCategoryController extends BaseController
             'items.*.is_active' => 'boolean',
             'items.*.is_available' => 'boolean',
             'items.*.preparation_time_minutes' => 'nullable|integer|min:0',
-            'items.*.item_type' => 'required|in:recipe,combo,simple',
-            'items.*.recipe_id' => 'nullable|exists:recipes,id',
+            'items.*.item_type' => 'required|in:combo,simple,product',
+            'items.*.product_id' => 'nullable|exists:products,id',
             'items.*.display_order' => 'integer',
         ]);
 

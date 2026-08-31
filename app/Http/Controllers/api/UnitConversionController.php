@@ -25,18 +25,7 @@ class UnitConversionController
     public function index(Request $request)
     {
         try {
-            $storeId = $request->input('store_id', currentStoreId());
-            $includeGlobal = $request->boolean('include_global', true);
-
             $conversions = UnitConversion::with(['fromUnit', 'toUnit', 'store'])
-                ->when($includeGlobal, function ($query) use ($storeId) {
-                    return $query->where(function ($q) use ($storeId) {
-                        $q->where('store_id', $storeId)
-                          ->orWhereNull('store_id');
-                    });
-                }, function ($query) use ($storeId) {
-                    return $query->where('store_id', $storeId);
-                })
                 ->orderBy('from_unit_id')
                 ->get();
 

@@ -90,19 +90,13 @@ class SaleService
 
                 // Step 11 & 12: Create movement and update stock of product for store (only for products)
                 if (!empty($item['product_id'])) {
-                    $this->stockService->processStoreProductMovement([
-                        'product_id' => $item['product_id'],
-                        'store_id' => $storeId,
-                        'quantity' => $item['qte'],
-                        'type' => 'sale',
-                        'direction' => 'out',
-                        'price' => $item['price'],
-                        'unit_cost' => $item['price'],
-                        'referenceable_type' => OrderSale::class,
-                        'referenceable_id' => $sale->getId(),
-                        'user_id' => auth()->id(),
-                        'note' => "Sale order: {$orderNumber}",
-                    ]);
+                    $this->stockDeductionService->deductProductStock(
+                        productId: (int) $item['product_id'],
+                        quantitySold: (float) $item['qte'],
+                        storeId: (int) $storeId,
+                        userId: (int) auth()->id(),
+                        orderSaleId: $sale->getId()
+                    );
                 }
             }
 
@@ -512,19 +506,13 @@ class SaleService
                         \App\Models\OrderItems::COL_INVOICE_PRICE => $itemData['price'],
                     ]);
 
-                    $this->stockService->processStoreProductMovement([
-                        'product_id' => $itemData['product']->getId(),
-                        'store_id' => $storeId,
-                        'quantity' => $itemData['quantity'],
-                        'type' => 'sale',
-                        'direction' => 'out',
-                        'price' => $itemData['price'],
-                        'unit_cost' => $itemData['price'],
-                        'referenceable_type' => OrderSale::class,
-                        'referenceable_id' => $sale->getId(),
-                        'user_id' => auth()->id(),
-                        'note' => "Sale order: {$orderNumber}",
-                    ]);
+                    $this->stockDeductionService->deductProductStock(
+                        productId: (int) $itemData['product']->getId(),
+                        quantitySold: (float) $itemData['quantity'],
+                        storeId: (int) $storeId,
+                        userId: (int) auth()->id(),
+                        orderSaleId: $sale->getId()
+                    );
 
                     continue;
                 }

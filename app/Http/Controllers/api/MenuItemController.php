@@ -30,7 +30,7 @@ class MenuItemController extends BaseController
         }
 
         try {
-            $query = \App\Models\MenuItem::with(['recipe', 'product', 'category'])
+            $query = \App\Models\MenuItem::with(['product', 'category'])
                 ->where('store_id', $storeId);
 
             // Optional filtering
@@ -87,8 +87,7 @@ class MenuItemController extends BaseController
             'is_active' => 'boolean',
             'is_available' => 'boolean',
             'preparation_time_minutes' => 'nullable|integer|min:0',
-            'item_type' => 'required|in:recipe,combo,simple,product',
-            'recipe_id' => 'nullable|exists:recipes,id',
+            'item_type' => 'required|in:combo,simple,product',
             'product_id' => 'nullable|exists:products,id',
             'display_order' => 'integer',
         ]);
@@ -112,7 +111,7 @@ class MenuItemController extends BaseController
     public function show($id)
     {
         try {
-            $item = \App\Models\MenuItem::with(['recipe', 'product', 'category', 'store'])->findOrFail($id);
+            $item = \App\Models\MenuItem::with(['product', 'category', 'store'])->findOrFail($id);
 
             return response()->json(new MenuItemResource($item), 200);
         } catch (Exception $e) {
@@ -134,8 +133,7 @@ class MenuItemController extends BaseController
             'is_active' => 'boolean',
             'is_available' => 'boolean',
             'preparation_time_minutes' => 'nullable|integer|min:0',
-            'item_type' => 'sometimes|required|in:recipe,combo,simple,product',
-            'recipe_id' => 'nullable|exists:recipes,id',
+            'item_type' => 'sometimes|required|in:combo,simple,product',
             'product_id' => 'nullable|exists:products,id',
             'display_order' => 'integer',
         ]);

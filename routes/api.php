@@ -8,9 +8,6 @@ use App\Http\Controllers\api\DashbordController;
 use App\Http\Controllers\api\ExportController;
 use App\Http\Controllers\api\ImportController;
 use App\Http\Controllers\api\InventaryController;
-use App\Http\Controllers\api\MenuCategoryController;
-use App\Http\Controllers\api\MenuController;
-use App\Http\Controllers\api\MenuItemController;
 use App\Http\Controllers\api\ModePayemntController;
 use App\Http\Controllers\api\OrderPurchaseController;
 use App\Http\Controllers\api\OrderSaleController;
@@ -22,7 +19,6 @@ use App\Http\Controllers\api\PrintProfileController;
 use App\Http\Controllers\api\ProductComponentController;
 use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\PurchaseDeliveryController;
-use App\Http\Controllers\api\RecipeController;
 use App\Http\Controllers\api\ReportController;
 use App\Http\Controllers\api\SettingController;
 use App\Http\Controllers\api\StoreController;
@@ -65,14 +61,6 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     Route::resource('/customers', CustomerController::class);
 
-    // Order-specific routes must come before resource route
-    Route::get('/orders/cancelled', [OrderSaleController::class, 'getCancelled']);
-    Route::get('/orders/canceled', [OrderSaleController::class, 'getCancelled']); // Alias
-    Route::put('/orders/{id}/cancel', [OrderSaleController::class, 'cancel']);
-    Route::post('/orders/{id}/payment', [OrderSaleController::class, 'addPaymentToOrder']);
-    Route::post('/orders/{id}/invoice', [OrderSaleController::class, 'updateToInvoice']);
-    Route::post('/restaurant-orders', [OrderSaleController::class, 'createRestaurantOrder']); // Restaurant-specific order creation
-    Route::post('/sell-menu-items', [OrderSaleController::class, 'sellMenuItems']); // Sell menu items from POS/restaurant frontend
     Route::resource('/orders', OrderSaleController::class);
 
     Route::resource('/categories', CategoryController::class);
@@ -170,52 +158,6 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::post('/bulk-read', [AlertController::class, 'bulkMarkAsRead']);
         Route::post('/bulk-resolve', [AlertController::class, 'bulkMarkAsResolved']);
     });
-
-    // Menu Management Routes (Phase 2)
-    Route::prefix('menus')->group(function () {
-        Route::get('/', [MenuController::class, 'index']);
-        Route::get('/currently-available', [MenuController::class, 'currentlyAvailable']);
-        Route::get('/statistics', [MenuController::class, 'statistics']);
-        Route::post('/', [MenuController::class, 'store']);
-        Route::get('/{id}', [MenuController::class, 'show']);
-        Route::put('/{id}', [MenuController::class, 'update']);
-        Route::delete('/{id}', [MenuController::class, 'destroy']);
-    });
-
-    Route::prefix('menu-categories')->group(function () {
-        Route::get('/', [MenuCategoryController::class, 'index']);
-        Route::post('/', [MenuCategoryController::class, 'store']);
-        Route::get('/{id}', [MenuCategoryController::class, 'show']);
-        Route::put('/{id}', [MenuCategoryController::class, 'update']);
-        Route::delete('/{id}', [MenuCategoryController::class, 'destroy']);
-    });
-
-    Route::prefix('menu-items')->group(function () {
-        Route::get('/', [MenuItemController::class, 'index']);
-        Route::get('/by-profitability', [MenuItemController::class, 'byProfitability']);
-        Route::post('/', [MenuItemController::class, 'store']);
-        Route::get('/{id}', [MenuItemController::class, 'show']);
-        Route::put('/{id}', [MenuItemController::class, 'update']);
-        Route::delete('/{id}', [MenuItemController::class, 'destroy']);
-        Route::get('/{id}/profitability', [MenuItemController::class, 'profitability']);
-        Route::post('/{id}/toggle-availability', [MenuItemController::class, 'toggleAvailability']);
-    });
-
-    // Recipe Management Routes (Phase 2)
-    Route::prefix('recipes')->group(function () {
-        Route::get('/', [RecipeController::class, 'index']);
-        Route::post('/', [RecipeController::class, 'store']);
-        Route::get('/{id}', [RecipeController::class, 'show']);
-        Route::put('/{id}', [RecipeController::class, 'update']);
-        Route::delete('/{id}', [RecipeController::class, 'destroy']);
-        Route::post('/{id}/recalculate-cost', [RecipeController::class, 'recalculateCost']);
-        Route::post('/{id}/clone', [RecipeController::class, 'clone']);
-        Route::post('/{id}/profitability', [RecipeController::class, 'calculateProfitability']);
-        Route::post('/{id}/ingredients', [RecipeController::class, 'addIngredient']);
-        Route::put('/{recipeId}/ingredients/{ingredientId}', [RecipeController::class, 'updateIngredient']);
-        Route::delete('/{recipeId}/ingredients/{ingredientId}', [RecipeController::class, 'removeIngredient']);
-    });
-    Route::post('/recipes-recalculate-all', [RecipeController::class, 'recalculateAllCosts']);
 
     // Unit Conversions (Phase 3)
     Route::prefix('unit-conversions')->group(function () {
