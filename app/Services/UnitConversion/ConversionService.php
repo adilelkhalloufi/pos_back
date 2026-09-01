@@ -63,16 +63,17 @@ class ConversionService
             $query = UnitConversion::where('from_unit_id', $fromUnitId)
                 ->where('to_unit_id', $toUnitId);
 
-            // First try store-specific conversion
+            // Priority: current store -> global -> any other store
             if ($storeId) {
-                $storeConversion = (clone $query)->where('store_id', $storeId)->first();
-                if ($storeConversion) {
-                    return $storeConversion;
-                }
+                return $query
+                    ->orderByRaw('CASE WHEN store_id = ? THEN 0 WHEN store_id IS NULL THEN 1 ELSE 2 END', [$storeId])
+                    ->first();
             }
 
-            // Fall back to global conversion (store_id is null)
-            return $query->whereNull('store_id')->first();
+            // Without store context, prefer global first, then any store conversion
+            return $query
+                ->orderByRaw('CASE WHEN store_id IS NULL THEN 0 ELSE 1 END')
+                ->first();
         });
     }
 
