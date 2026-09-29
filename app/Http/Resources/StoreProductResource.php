@@ -22,6 +22,14 @@ class StoreProductResource extends JsonResource
         return [
             'id' => $this->id, // id of store_product
             'id_store_product' => $this->id, // kept for backward compatibility
+Product::COL_NAME => $this->product->name ,
+
+            'label' => $this->product->name . (
+    $this->product->barcodes && $this->product->barcodes->isNotEmpty()
+        ? ' (' . $this->product->barcodes->pluck('barcode')->filter()->implode(', ') . ')'
+        : ''
+),
+
             StoreProducts::COL_STORE_ID => $this->{StoreProducts::COL_STORE_ID},
             StoreProducts::COL_PRODUCT_ID => $this->{StoreProducts::COL_PRODUCT_ID},
             StoreProducts::COL_PRICE => (float) $this->{StoreProducts::COL_PRICE},
@@ -39,13 +47,11 @@ class StoreProductResource extends JsonResource
             Product::COL_PRICE_BUY => (float) $this->product->price_buy,
             Product::COL_IS_ACTIVE => $this->product->is_active,
             Product::COL_ARCHIVE => $this->product->archive,
-            Product::COL_NAME => $this->product->name,
-            Product::COL_DESCRIPTION => $this->product->description,
+             Product::COL_DESCRIPTION => $this->product->description,
             Product::COL_PRICE => (float) $this->product->price,
             Product::COL_PRICE_SELL_1 => (float) $this->product->price_sell_1,
 
             Product::COL_IMAGE => $this->product->image ? asset('storage/' . $this->product->image) : null,
-            Product::COL_CREATED_AT => $this->created_at,
             Product::COL_CREATED_AT => $this->created_at,
             OrderItems::COL_PRODUCT_ID => $this->product->id, // this for order items
             Product::COL_CATEGORY_ID => $this->product->category_id,
