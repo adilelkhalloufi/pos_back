@@ -5,6 +5,7 @@ namespace App\Services\Stock;
 use App\Models\StockMovement;
 use App\Models\StoreProducts;
 use App\Services\Alert\AlertService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 class StockService
@@ -126,14 +127,16 @@ class StockService
         return $query->paginate($perPage);
     }
 
-    public function processStoreProductMovement(array $data, bool $skipAlerts = false): StockMovement
+    public function processStoreProductMovement(array $data, bool $skipAlerts = false): ?StockMovement
     {
         $storeId = $data['store_id'];
         $productId = $data['product_id'];
         $quantity = $data['quantity'];
         $type = $data['type']; // 'sale', 'purchase', 'adjustment', 'transfer'
 
-        $stockMovement = DB::transaction(function () use ($data, $storeId, $productId, $quantity, $type) {
+        $movementData = [];
+
+        DB::transaction(function () use ($data, $storeId, $productId, $quantity, $type, &$movementData) {
             // Lock the specific store-product row before updating it.
             $storeProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $storeId)
                 ->where(StoreProducts::COL_PRODUCT_ID, $productId)
@@ -164,7 +167,7 @@ class StockService
                 StoreProducts::COL_COST => $data['cost'] ?? $storeProduct->{StoreProducts::COL_COST},
             ]);
 
-            return StockMovement::create([
+            $movementData = [
                 StockMovement::COL_PRODUCT_ID => $productId,
                 StockMovement::COL_SOURCE_STORE_ID => $storeId,
                 StockMovement::COL_TARGET_STORE_ID => $data['target_store_id'] ?? null,
@@ -181,8 +184,10 @@ class StockService
                 StockMovement::COL_USER_ID => $data['user_id'] ?? auth()->id(),
                 StockMovement::COL_NOTE => $data['note'] ?? null,
                 StockMovement::COL_META => $data['meta'] ?? null,
-            ]);
+            ];
         });
+
+        $stockMovement = $this->createMovementSafely($movementData);
 
         // Only check alerts if not explicitly skipped (for batch operations)
         if (!$skipAlerts) {
@@ -190,6 +195,24 @@ class StockService
         }
 
         return $stockMovement;
+    }
+
+    /**
+     * Create stock movement record without throwing, used when movement logging
+     * must never break the main business flow.
+     */
+    public function createMovementSafely(array $movementData): ?StockMovement
+    {
+        try {
+            return StockMovement::create($movementData);
+        } catch (\Throwable $e) {
+            Log::warning('Stock movement insert skipped due to error', [
+                'error' => $e->getMessage(),
+                'movement_data' => $movementData,
+            ]);
+
+            return null;
+        }
     }
 
     /**

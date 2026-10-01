@@ -25,13 +25,16 @@ class StockDeductionService
 {
     protected $conversionService;
     protected $costingService;
+    protected $stockService;
 
     public function __construct(
         ConversionService $conversionService,
-        CostingService $costingService
+        CostingService $costingService,
+        StockService $stockService
     ) {
         $this->conversionService = $conversionService;
         $this->costingService = $costingService;
+        $this->stockService = $stockService;
     }
 
     /**
@@ -85,8 +88,8 @@ class StockDeductionService
                 // Deduct stock
                 $storeProduct->decrement('stock', $quantity);
 
-                // Create stock movement
-                StockMovement::create([
+                // Create stock movement (safe: skip on failure)
+                $this->stockService->createMovementSafely([
                     'store_id' => $storeId,
                     'product_id' => $product->id,
                     'quantity' => $quantity,
@@ -287,7 +290,7 @@ class StockDeductionService
 
         $storeProduct->decrement('stock', $quantityToDeduct);
 
-        StockMovement::create([
+        $this->stockService->createMovementSafely([
             'product_id' => $product->id,
             'store_id' => $storeId,
             'type' => 'sale',
@@ -389,8 +392,8 @@ class StockDeductionService
         $storeProduct->stock -= $quantityToDeduct;
         $storeProduct->save();
 
-        // Create stock movement
-        $stockMovement = StockMovement::create([
+        // Create stock movement (safe: skip on failure)
+        $stockMovement = $this->stockService->createMovementSafely([
             'product_id' => $product->id,
             'store_id' => $storeId,
             'type' => 'sale',
@@ -419,7 +422,7 @@ class StockDeductionService
             'unit_cost' => $unitCost,
             'total_cost' => $quantityToDeduct * $unitCost,
             'remaining_stock' => $storeProduct->stock,
-            'stock_movement_id' => $stockMovement->id,
+            'stock_movement_id' => $stockMovement?->id,
         ];
     }
 

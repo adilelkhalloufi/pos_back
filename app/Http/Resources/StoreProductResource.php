@@ -59,6 +59,7 @@ class StoreProductResource extends JsonResource
                 fn () => $this->product->barcodes->pluck('barcode')->toArray(),
                 []
             ),
+
             'category' => $this->when(
                 $this->product->relationLoaded('category'),
                 fn () => CategoryResource::make($this->product->category),
@@ -70,6 +71,15 @@ class StoreProductResource extends JsonResource
                     'id' => $this->product->unit?->id,
                     'name' => $this->product->unit?->name,
                     'symbol' => $this->product->unit?->symbol,
+                ],
+                null
+            ),
+            'unite_sell' => $this->when(
+                $this->product->relationLoaded('sellUnit'),
+                fn () => [
+                    'id' => $this->product->sellUnit?->id,
+                    'name' => $this->product->sellUnit?->name,
+                    'symbol' => $this->product->sellUnit?->symbol,
                 ],
                 null
             ),

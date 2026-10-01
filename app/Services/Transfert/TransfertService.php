@@ -3,17 +3,20 @@
 namespace App\Services\Transfert;
 
 use App\Models\StoreProducts;
+use App\Models\StockMovement;
 use App\Models\Transfert;
 use App\Models\TransfertItem;
 use App\Repositories\Transfert\TransfertRepository;
 use App\Services\Alert\AlertService;
+use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
 
 class TransfertService
 {
     public function __construct(
         private readonly TransfertRepository $transfertRepository,
-        private readonly AlertService $alertService
+        private readonly AlertService $alertService,
+        private readonly StockService $stockService
     ) {}
 
     /**
@@ -110,11 +113,33 @@ class TransfertService
                 if (!$transfert->sent_at) {
                     $productIds = [];
                     foreach ($transfert->items as $item) {
+                        $sourceProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $transfert->source_store_id)
+                            ->where(StoreProducts::COL_PRODUCT_ID, $item->product_id)
+                            ->first();
+                        $previousStock = (float) ($sourceProduct?->stock ?? 0);
+
                         $this->updateStoreStock(
                             $transfert->source_store_id,
                             $item->product_id,
                             -$item->quantity
                         );
+
+                        $this->stockService->createMovementSafely([
+                            StockMovement::COL_PRODUCT_ID => $item->product_id,
+                            StockMovement::COL_STORE_ID => $transfert->source_store_id,
+                            StockMovement::COL_SOURCE_STORE_ID => $transfert->source_store_id,
+                            StockMovement::COL_TARGET_STORE_ID => $transfert->target_store_id,
+                            StockMovement::COL_TYPE => StockMovement::TYPE_TRANSFER,
+                            StockMovement::COL_DIRECTION => StockMovement::DIRECTION_OUT,
+                            StockMovement::COL_QUANTITY => $item->quantity,
+                            StockMovement::COL_PREVIOUS_STOCK => $previousStock,
+                            StockMovement::COL_NEW_STOCK => $previousStock - (float) $item->quantity,
+                            StockMovement::COL_USER_ID => auth()->id(),
+                            StockMovement::COL_REFERENCEABLE_TYPE => Transfert::class,
+                            StockMovement::COL_REFERENCEABLE_ID => $transfert->id,
+                            StockMovement::COL_NOTE => 'Transfer sent: ' . $transfert->reference,
+                        ]);
+
                         $productIds[] = $item->product_id;
                     }
                     // Check alerts for affected products at source store
@@ -133,11 +158,33 @@ class TransfertService
 
                     // Deduct from source store for all items
                     foreach ($transfert->items as $item) {
+                        $sourceProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $transfert->source_store_id)
+                            ->where(StoreProducts::COL_PRODUCT_ID, $item->product_id)
+                            ->first();
+                        $previousStock = (float) ($sourceProduct?->stock ?? 0);
+
                         $this->updateStoreStock(
                             $transfert->source_store_id,
                             $item->product_id,
                             -$item->quantity
                         );
+
+                        $this->stockService->createMovementSafely([
+                            StockMovement::COL_PRODUCT_ID => $item->product_id,
+                            StockMovement::COL_STORE_ID => $transfert->source_store_id,
+                            StockMovement::COL_SOURCE_STORE_ID => $transfert->source_store_id,
+                            StockMovement::COL_TARGET_STORE_ID => $transfert->target_store_id,
+                            StockMovement::COL_TYPE => StockMovement::TYPE_TRANSFER,
+                            StockMovement::COL_DIRECTION => StockMovement::DIRECTION_OUT,
+                            StockMovement::COL_QUANTITY => $item->quantity,
+                            StockMovement::COL_PREVIOUS_STOCK => $previousStock,
+                            StockMovement::COL_NEW_STOCK => $previousStock - (float) $item->quantity,
+                            StockMovement::COL_USER_ID => auth()->id(),
+                            StockMovement::COL_REFERENCEABLE_TYPE => Transfert::class,
+                            StockMovement::COL_REFERENCEABLE_ID => $transfert->id,
+                            StockMovement::COL_NOTE => 'Transfer sent on complete: ' . $transfert->reference,
+                        ]);
+
                         $productIds[] = $item->product_id;
                     }
 
@@ -152,12 +199,34 @@ class TransfertService
 
                 // Add to target store for all items
                 foreach ($transfert->items as $item) {
+                    $targetProduct = StoreProducts::where(StoreProducts::COL_STORE_ID, $transfert->target_store_id)
+                        ->where(StoreProducts::COL_PRODUCT_ID, $item->product_id)
+                        ->first();
+                    $previousStock = (float) ($targetProduct?->stock ?? 0);
+
                     $this->updateStoreStock(
                         $transfert->target_store_id,
                         $item->product_id,
                         $item->quantity,
                         $transfert->source_store_id
                     );
+
+                    $this->stockService->createMovementSafely([
+                        StockMovement::COL_PRODUCT_ID => $item->product_id,
+                        StockMovement::COL_STORE_ID => $transfert->target_store_id,
+                        StockMovement::COL_SOURCE_STORE_ID => $transfert->source_store_id,
+                        StockMovement::COL_TARGET_STORE_ID => $transfert->target_store_id,
+                        StockMovement::COL_TYPE => StockMovement::TYPE_TRANSFER,
+                        StockMovement::COL_DIRECTION => StockMovement::DIRECTION_IN,
+                        StockMovement::COL_QUANTITY => $item->quantity,
+                        StockMovement::COL_PREVIOUS_STOCK => $previousStock,
+                        StockMovement::COL_NEW_STOCK => $previousStock + (float) $item->quantity,
+                        StockMovement::COL_USER_ID => auth()->id(),
+                        StockMovement::COL_REFERENCEABLE_TYPE => Transfert::class,
+                        StockMovement::COL_REFERENCEABLE_ID => $transfert->id,
+                        StockMovement::COL_NOTE => 'Transfer received: ' . $transfert->reference,
+                    ]);
+
                     if (!in_array($item->product_id, $productIds)) {
                         $productIds[] = $item->product_id;
                     }

@@ -4,16 +4,19 @@ namespace App\Services\Ajustement;
 
 use App\Models\Ajustement;
 use App\Models\AjustementItem;
+use App\Models\StockMovement;
 use App\Models\StoreProducts;
 use App\Repositories\Ajustement\AjustementRepository;
 use App\Services\Alert\AlertService;
+use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
 
 class AjustementService
 {
     public function __construct(
         private readonly AjustementRepository $ajustementRepository,
-        private readonly AlertService $alertService
+        private readonly AlertService $alertService,
+        private readonly StockService $stockService
     ) {}
 
     /**
@@ -117,9 +120,27 @@ class AjustementService
                     if ($storeProduct) {
                         // Calculate adjustment quantity
                         $adjustmentQuantity = $item->type === 'increase' ? $item->quantity : -$item->quantity;
+                        $previousStock = (float) $storeProduct->stock;
 
                         // Update stock
                         $storeProduct->increment(StoreProducts::COL_STOCK, $adjustmentQuantity);
+
+                        $this->stockService->createMovementSafely([
+                            StockMovement::COL_PRODUCT_ID => $item->product_id,
+                            StockMovement::COL_STORE_ID => $ajustement->target_store_id,
+                            StockMovement::COL_SOURCE_STORE_ID => $ajustement->target_store_id,
+                            StockMovement::COL_TYPE => StockMovement::TYPE_ADJUSTMENT,
+                            StockMovement::COL_DIRECTION => $adjustmentQuantity >= 0
+                                ? StockMovement::DIRECTION_IN
+                                : StockMovement::DIRECTION_OUT,
+                            StockMovement::COL_QUANTITY => abs((float) $item->quantity),
+                            StockMovement::COL_PREVIOUS_STOCK => $previousStock,
+                            StockMovement::COL_NEW_STOCK => $previousStock + (float) $adjustmentQuantity,
+                            StockMovement::COL_USER_ID => auth()->id(),
+                            StockMovement::COL_REFERENCEABLE_TYPE => Ajustement::class,
+                            StockMovement::COL_REFERENCEABLE_ID => $ajustement->id,
+                            StockMovement::COL_NOTE => 'Adjustment completed: ' . $ajustement->reference,
+                        ]);
                     }
                 }
 

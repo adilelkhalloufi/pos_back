@@ -28,6 +28,7 @@ use App\Http\Controllers\api\TransfertController;
 use App\Http\Controllers\api\UnitController;
 use App\Http\Controllers\api\UnitConversionController;
 use App\Http\Controllers\api\StockDeductionController;
+use App\Http\Controllers\api\StockController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Middleware\EnsureTrialIsValid;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +55,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::post('/users/{id}/change-password', [UserController::class, 'changePassword']);
 
     Route::resource('/products', ProductController::class);
+    Route::get('/products/{id}/stock-movements', [StockController::class, 'productStockMovements']);
     
 
     Route::get('/pos', [StoreProductsController::class, 'index']);

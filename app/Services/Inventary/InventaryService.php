@@ -4,16 +4,19 @@ namespace App\Services\Inventary;
 
 use App\Models\Inventary;
 use App\Models\InventaryItem;
+use App\Models\StockMovement;
 use App\Models\StoreProducts;
 use App\Repositories\Inventary\InventaryRepository;
 use App\Services\Alert\AlertService;
+use App\Services\Stock\StockService;
 use Illuminate\Support\Facades\DB;
 
 class InventaryService
 {
     public function __construct(
         private readonly InventaryRepository $inventaryRepository,
-        private readonly AlertService $alertService
+        private readonly AlertService $alertService,
+        private readonly StockService $stockService
     ) {}
 
     /**
@@ -217,8 +220,28 @@ class InventaryService
                             ->first();
 
                         if ($storeProduct) {
+                            $previousStock = (float) $storeProduct->stock;
+                            $newStock = (float) $item->actual_quantity;
+
                             $storeProduct->update([
                                 StoreProducts::COL_STOCK => $item->actual_quantity
+                            ]);
+
+                            $this->stockService->createMovementSafely([
+                                StockMovement::COL_PRODUCT_ID => $item->product_id,
+                                StockMovement::COL_STORE_ID => $inventary->store_id,
+                                StockMovement::COL_SOURCE_STORE_ID => $inventary->store_id,
+                                StockMovement::COL_TYPE => StockMovement::TYPE_INVENTORY,
+                                StockMovement::COL_DIRECTION => $newStock >= $previousStock
+                                    ? StockMovement::DIRECTION_IN
+                                    : StockMovement::DIRECTION_OUT,
+                                StockMovement::COL_QUANTITY => abs($newStock - $previousStock),
+                                StockMovement::COL_PREVIOUS_STOCK => $previousStock,
+                                StockMovement::COL_NEW_STOCK => $newStock,
+                                StockMovement::COL_USER_ID => auth()->id(),
+                                StockMovement::COL_REFERENCEABLE_TYPE => Inventary::class,
+                                StockMovement::COL_REFERENCEABLE_ID => $inventary->id,
+                                StockMovement::COL_NOTE => 'Inventory completion: ' . $inventary->reference,
                             ]);
                         }
                     }
