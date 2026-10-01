@@ -22,13 +22,13 @@ class StoreProductResource extends JsonResource
         return [
             'id' => $this->id, // id of store_product
             'id_store_product' => $this->id, // kept for backward compatibility
-Product::COL_NAME => $this->product->name ,
+            Product::COL_NAME => $this->product->name ,
 
             'label' => $this->product->name . (
-    $this->product->barcodes && $this->product->barcodes->isNotEmpty()
-        ? ' (' . $this->product->barcodes->pluck('barcode')->filter()->implode(', ') . ')'
-        : ''
-),
+                $this->product->barcodes && $this->product->barcodes->isNotEmpty()
+                    ? ' (' . $this->product->barcodes->pluck('barcode')->filter()->implode(', ') . ')'
+                    : ''
+            ),
 
             StoreProducts::COL_STORE_ID => $this->{StoreProducts::COL_STORE_ID},
             StoreProducts::COL_PRODUCT_ID => $this->{StoreProducts::COL_PRODUCT_ID},
