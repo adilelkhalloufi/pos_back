@@ -12,7 +12,6 @@ use App\Models\StoreProducts;
 use App\Services\Product\Exceptions\ProductNotFoundException;
 use App\Services\Product\ProductService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProductController extends BaseController
 {
@@ -96,9 +95,9 @@ class ProductController extends BaseController
     public function update(ProductRequest $request, $id)
     {
         $contentType = (string) $request->header('Content-Type', '');
-        if ($request->isMethod('PUT') && str_contains($contentType, 'multipart/form-data') && !$request->hasFile('image') && $request->has('image')) {
+        if ($request->isMethod('PUT') && str_contains($contentType, 'multipart/form-data') && !$request->hasFile('image')) {
             return response()->json([
-                'error' => 'Image upload with PUT multipart is not supported by this server. Use POST /api/products/{id} with multipart/form-data.',
+                'error' => 'Image upload with PUT multipart is not supported by this server. Use POST /api/products/{id} with multipart/form-data and _method=PUT.',
             ], 422);
         }
 
