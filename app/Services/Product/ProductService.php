@@ -11,6 +11,8 @@ use App\Models\ProductBarcode;
 use App\Repositories\Product\ProductRepository;
 use App\Repositories\Store\StoreRepository;
 use App\Services\Product\Exceptions\ProductNotFoundException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
@@ -157,6 +159,14 @@ class ProductService
             throw new ProductNotFoundException();
         }
         $components = $attributes['components'] ?? null;
+
+        if (isset($attributes[Product::COL_IMAGE]) && $attributes[Product::COL_IMAGE] instanceof UploadedFile) {
+            if (!empty($product->image) && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $attributes[Product::COL_IMAGE] = $attributes[Product::COL_IMAGE]->store('products', 'public');
+        }
 
         $resolvedType = $attributes['product_type']
             ?? (is_array($components) ? (!empty($components) ? Product::TYPE_COMPONENT : Product::TYPE_NORMAL) : $product->product_type);

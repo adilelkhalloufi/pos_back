@@ -7,7 +7,6 @@ use App\Models\ProductComponent;
 use App\Models\Store;
 use App\Models\StoreProducts;
 use App\Models\Unit;
-use App\Models\UnitConversion;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -20,109 +19,86 @@ class ProductScenariosSeeder extends Seeder
             throw new \RuntimeException('Missing columns product_type/sell_unit_id on products table. Run migrations first.');
         }
 
-        $store = Store::find(1);
+        $store = Store::first();
         if (!$store) {
-            throw new \RuntimeException('Store with ID 1 was not found. Create first store before running this seeder.');
+            throw new \RuntimeException('No store found. Create a store before running this seeder.');
         }
 
         DB::transaction(function () use ($store): void {
             $unitPiece = Unit::firstOrCreate(
-                ['name' => 'Unit', 'symbol' => 'u', 'store_id' => null],
+                ['name' => 'Piece', 'symbol' => 'u', 'store_id' => null],
                 ['description' => 'Piece unit', 'is_active' => true]
             );
 
-            $unitKg = Unit::firstOrCreate(
-                ['name' => 'Kilogram', 'symbol' => 'kg', 'store_id' => null],
-                ['description' => 'Weight in kilograms', 'is_active' => true]
-            );
-
-            $unitGram = Unit::firstOrCreate(
-                ['name' => 'Gram', 'symbol' => 'g', 'store_id' => null],
-                ['description' => 'Weight in grams', 'is_active' => true]
-            );
-
-            UnitConversion::updateOrCreate(
+            $pijama1 = Product::updateOrCreate(
+                ['store_id' => $store->id, 'reference' => 'CLOTH-PIJAMA-1'],
                 [
-                    'from_unit_id' => $unitKg->id,
-                    'to_unit_id' => $unitGram->id,
-                    'store_id' => $store->id,
-                ],
-                ['conversion_factor' => 1000]
-            );
-
-            // Scenario 1: Normal product where stock unit == sell unit
-            $bottleWater = Product::updateOrCreate(
-                ['store_id' => $store->id, 'reference' => 'CASE-S1-WATER'],
-                [
-                    'name' => 'Water Bottle 50cl',
-                    'description' => 'Scenario 1: same stock and sell unit (u -> u)',
-                    'price' => 8,
-                    'price_sell_1' => 8,
-                    'price_buy' => 4,
-                    'is_active' => true,
-                    'is_stockable' => true,
-                    'archive' => false,
-                    'stock_alert' => 10,
-                    'unit_id' => $unitPiece->id,
-                    'sell_unit_id' => $unitPiece->id,
-                    'product_type' => Product::TYPE_NORMAL,
-                    'user_id' => $store->owner_id,
-                ]
-            );
-
-            // Scenario 2: Normal product where stock unit != sell unit (kg -> g)
-            $flour = Product::updateOrCreate(
-                ['store_id' => $store->id, 'reference' => 'CASE-S2-FLOUR'],
-                [
-                    'name' => 'Flour Bulk',
-                    'description' => 'Scenario 2: stock in kg, sold in g',
-                    'price' => 0.025,
-                    'price_sell_1' => 0.025,
-                    'price_buy' => 12,
-                    'is_active' => true,
-                    'is_stockable' => true,
-                    'archive' => false,
-                    'stock_alert' => 2,
-                    'unit_id' => $unitKg->id,
-                    'sell_unit_id' => $unitGram->id,
-                    'product_type' => Product::TYPE_NORMAL,
-                    'user_id' => $store->owner_id,
-                ]
-            );
-
-            // Extra normal component candidate (same-unit)
-            $cheeseSlice = Product::updateOrCreate(
-                ['store_id' => $store->id, 'reference' => 'CASE-COMP-CHEESE'],
-                [
-                    'name' => 'Cheese Slice',
-                    'description' => 'Component candidate with same stock/sell unit',
-                    'price' => 3,
-                    'price_sell_1' => 3,
-                    'price_buy' => 1.5,
-                    'is_active' => true,
-                    'is_stockable' => true,
-                    'archive' => false,
-                    'stock_alert' => 10,
-                    'unit_id' => $unitPiece->id,
-                    'sell_unit_id' => $unitPiece->id,
-                    'product_type' => Product::TYPE_NORMAL,
-                    'user_id' => $store->owner_id,
-                ]
-            );
-
-            // Scenario 3: Product with components
-            $sandwich = Product::updateOrCreate(
-                ['store_id' => $store->id, 'reference' => 'CASE-S3-SANDWICH'],
-                [
-                    'name' => 'Custom Sandwich',
-                    'description' => 'Scenario 3: composed product with mixed component scenarios',
-                    'price' => 35,
-                    'price_sell_1' => 35,
-                    'price_buy' => 0,
+                    'name' => 'Pijama 1',
+                    'description' => 'Basic pijama model used in the winter pack.',
+                    'price' => 120,
+                    'price_sell_1' => 120,
+                    'price_buy' => 70,
                     'is_active' => true,
                     'is_stockable' => true,
                     'archive' => false,
                     'stock_alert' => 5,
+                    'unit_id' => $unitPiece->id,
+                    'sell_unit_id' => $unitPiece->id,
+                    'product_type' => Product::TYPE_NORMAL,
+                    'user_id' => $store->owner_id,
+                ]
+            );
+
+            $pijama2 = Product::updateOrCreate(
+                ['store_id' => $store->id, 'reference' => 'CLOTH-PIJAMA-2'],
+                [
+                    'name' => 'Pijama 2',
+                    'description' => 'Second pijama model used in the winter pack.',
+                    'price' => 130,
+                    'price_sell_1' => 130,
+                    'price_buy' => 75,
+                    'is_active' => true,
+                    'is_stockable' => true,
+                    'archive' => false,
+                    'stock_alert' => 5,
+                    'unit_id' => $unitPiece->id,
+                    'sell_unit_id' => $unitPiece->id,
+                    'product_type' => Product::TYPE_NORMAL,
+                    'user_id' => $store->owner_id,
+                ]
+            );
+
+            $pijama3 = Product::updateOrCreate(
+                ['store_id' => $store->id, 'reference' => 'CLOTH-PIJAMA-3'],
+                [
+                    'name' => 'Pijama 3',
+                    'description' => 'Third pijama model used in the winter pack.',
+                    'price' => 140,
+                    'price_sell_1' => 140,
+                    'price_buy' => 80,
+                    'is_active' => true,
+                    'is_stockable' => true,
+                    'archive' => false,
+                    'stock_alert' => 5,
+                    'unit_id' => $unitPiece->id,
+                    'sell_unit_id' => $unitPiece->id,
+                    'product_type' => Product::TYPE_NORMAL,
+                    'user_id' => $store->owner_id,
+                ]
+            );
+
+            $packWinter = Product::updateOrCreate(
+                ['store_id' => $store->id, 'reference' => 'PACK-WINTER'],
+                [
+                    'name' => 'Pack Winter',
+                    'description' => 'Composed winter pack including Pijama 1, Pijama 2, and Pijama 3.',
+                    'price' => 360,
+                    'price_sell_1' => 360,
+                    'price_buy' => 0,
+                    'is_active' => true,
+                    'is_stockable' => true,
+                    'archive' => false,
+                    'stock_alert' => 3,
                     'unit_id' => $unitPiece->id,
                     'sell_unit_id' => $unitPiece->id,
                     'product_type' => Product::TYPE_COMPONENT,
@@ -130,36 +106,25 @@ class ProductScenariosSeeder extends Seeder
                 ]
             );
 
-            // Components for scenario 3
             ProductComponent::updateOrCreate(
-                [
-                    'product_id' => $sandwich->id,
-                    'component_id' => $flour->id,
-                ],
-                [
-                    'quantity' => 120, // 120g flour per sandwich
-                    'unit_id' => $unitGram->id,
-                    'note' => 'Flour measured in grams',
-                ]
+                ['product_id' => $packWinter->id, 'component_id' => $pijama1->id],
+                ['quantity' => 1, 'unit_id' => $unitPiece->id, 'note' => 'Pijama 1 included in the winter pack']
             );
 
             ProductComponent::updateOrCreate(
-                [
-                    'product_id' => $sandwich->id,
-                    'component_id' => $cheeseSlice->id,
-                ],
-                [
-                    'quantity' => 2,
-                    'unit_id' => $unitPiece->id,
-                    'note' => 'Two slices per sandwich',
-                ]
+                ['product_id' => $packWinter->id, 'component_id' => $pijama2->id],
+                ['quantity' => 1, 'unit_id' => $unitPiece->id, 'note' => 'Pijama 2 included in the winter pack']
             );
 
-            // Ensure stock entries exist in store_products for testing order deduction
-            $this->seedStoreProduct($store->id, $bottleWater->id, 8, 4, 250);
-            $this->seedStoreProduct($store->id, $flour->id, 0.025, 12, 80); // 80kg stock
-            $this->seedStoreProduct($store->id, $cheeseSlice->id, 3, 1.5, 300);
-            $this->seedStoreProduct($store->id, $sandwich->id, 35, 0, 9999); // virtual stock for composed SKU visibility
+            ProductComponent::updateOrCreate(
+                ['product_id' => $packWinter->id, 'component_id' => $pijama3->id],
+                ['quantity' => 1, 'unit_id' => $unitPiece->id, 'note' => 'Pijama 3 included in the winter pack']
+            );
+
+            $this->seedStoreProduct($store->id, $pijama1->id, 120, 70, 20);
+            $this->seedStoreProduct($store->id, $pijama2->id, 130, 75, 18);
+            $this->seedStoreProduct($store->id, $pijama3->id, 140, 80, 15);
+            $this->seedStoreProduct($store->id, $packWinter->id, 360, 0, 9999);
         });
     }
 

@@ -9,12 +9,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "filament/filament": "^3.2",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "opcodesio/log-viewer": "^3.14",
-        "openspout/openspout": "^4.32"
+        "openspout/openspout": "~4.23.0"
     },
     "require-dev": {
         "adev/lrc": "^2.0",

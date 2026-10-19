@@ -91,11 +91,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
     
-        // ProductScenariosSeeder::run();
-
+        // Product scenarios are seeded manually when needed.
         $this->call(ProductScenariosSeeder::class);
-     
-
-        
     }
 }
