@@ -50,11 +50,8 @@ class ProductService
     {
         // i shiuld create product related to store and user and check if there is other store related to this store and add it to to other store 
 
-
-
         if (isset($attributes[Product::COL_IMAGE])) {
-            $imagePath = $attributes[Product::COL_IMAGE]->store('products', 'public');
-            $attributes[Product::COL_IMAGE] = $imagePath;
+            $attributes[Product::COL_IMAGE] = $this->storeImage($attributes[Product::COL_IMAGE], null);
         }
 
         $components = $attributes['components'] ?? [];
@@ -150,6 +147,52 @@ class ProductService
         return $product->fresh(['unit', 'sellUnit', 'components.component', 'components.unit']);
     }
 
+    private function storeImage(mixed $image, ?string $oldImagePath = null): ?string
+    {
+        if ($image instanceof UploadedFile) {
+            if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+
+            return $image->store('products', 'public');
+        }
+
+        if (is_string($image) && str_starts_with($image, 'data:image/')) {
+            if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+
+            $data = explode(',', $image, 2);
+            if (count($data) !== 2) {
+                return $oldImagePath;
+            }
+
+            $decoded = base64_decode($data[1], true);
+            if ($decoded === false) {
+                return $oldImagePath;
+            }
+
+            $mime = explode(';', $data[0])[0] ?? 'image/png';
+            $extension = match ($mime) {
+                'data:image/jpeg' => 'jpg',
+                'data:image/png' => 'png',
+                'data:image/webp' => 'webp',
+                default => 'png',
+            };
+
+            $fileName = 'products/' . uniqid('product_', true) . '.' . $extension;
+            Storage::disk('public')->put($fileName, $decoded);
+
+            return $fileName;
+        }
+
+        if (is_string($image) && !empty($image) && !str_starts_with($image, 'http')) {
+            return $image;
+        }
+
+        return $oldImagePath;
+    }
+
     public function update(int $id, array $attributes): ?Product
     {
 
@@ -160,12 +203,8 @@ class ProductService
         }
         $components = $attributes['components'] ?? null;
 
-        if (isset($attributes[Product::COL_IMAGE]) && $attributes[Product::COL_IMAGE] instanceof UploadedFile) {
-            if (!empty($product->image) && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
-            }
-
-            $attributes[Product::COL_IMAGE] = $attributes[Product::COL_IMAGE]->store('products', 'public');
+        if (isset($attributes[Product::COL_IMAGE])) {
+            $attributes[Product::COL_IMAGE] = $this->storeImage($attributes[Product::COL_IMAGE], $product->image);
         }
 
         $resolvedType = $attributes['product_type']

@@ -52,8 +52,10 @@ class ProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
+
         return [
-            'name'             => 'required|string|max:255',
+            'name'             => $isUpdate ? 'sometimes|string|max:255' : 'required|string|max:255',
             'price'            => 'nullable|numeric',
             'price_buy'        => 'nullable|numeric|min:0',
             'price_sell_1'     => 'nullable|numeric|min:0',
@@ -66,12 +68,12 @@ class ProductRequest extends FormRequest
             'description'      => 'nullable|string',
             'image'            => 'nullable',
             'stock_alert'      => 'nullable|integer',
-             'is_active'        => 'nullable',
+            'is_active'        => 'nullable',
             'is_stockable'     => 'nullable|boolean',
             'product_type'     => 'nullable|in:normal,component',
             'archive'          => 'nullable',
             'quantity'         => 'nullable|integer|min:0',
-             'category_id'      => 'nullable|integer|exists:categories,id',
+            'category_id'      => 'nullable|integer|exists:categories,id',
             'unit_id'          => 'nullable|integer|exists:units,id',
             'sell_unit_id'     => 'nullable|integer|exists:units,id',
             'print_profile_id' => 'nullable|integer|exists:print_profiles,id',

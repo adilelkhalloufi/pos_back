@@ -52,6 +52,9 @@ class ProductController extends BaseController
     public function store(ProductRequest $request)
     {
         $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image');
+        }
 
         try {
 
@@ -92,10 +95,17 @@ class ProductController extends BaseController
      */
     public function update(ProductRequest $request, $id)
     {
-
-
+        $contentType = (string) $request->header('Content-Type', '');
+        if ($request->isMethod('PUT') && str_contains($contentType, 'multipart/form-data') && !$request->hasFile('image') && $request->has('image')) {
+            return response()->json([
+                'error' => 'Image upload with PUT multipart is not supported by this server. Use POST /api/products/{id} with multipart/form-data.',
+            ], 422);
+        }
 
         $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image');
+        }
 
         try {
 
