@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::resource('/products', ProductController::class);
     Route::get('/products/{id}/stock-movements', [StockController::class, 'productStockMovements']);
     
+    
 
     Route::get('/pos', [StoreProductsController::class, 'index']);
 
