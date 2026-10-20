@@ -165,4 +165,9 @@ class Product extends BaseModel
     {
         return $this->hasMany(ProductBarcode::class, 'product_id', self::COL_ID);
     }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class, ProductVariant::COL_PRODUCT_ID, self::COL_ID);
+    }
 }

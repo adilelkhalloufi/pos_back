@@ -37,7 +37,7 @@ class ProductController extends BaseController
         }
 
         $product = Product::where(Product::COL_STORE_ID, $storeId)
-            ->with(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit'])
+            ->with(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit', 'variants'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -60,7 +60,7 @@ class ProductController extends BaseController
             $product =  $this->productService->create($validated);
 
             // Load barcodes relationship
-            $product->load(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit']);
+            $product->load(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit', 'variants']);
         } catch (\Exception $e) {
 
             return response()->json(['error' => __('product.errors.failed_to_create'), 'message' => $e->getMessage()], 500);
@@ -77,6 +77,7 @@ class ProductController extends BaseController
 
         try {
             $product =  $this->productService->findwithRelations($id);
+            $product->loadMissing('variants');
             $stores = StoreProducts::where(StoreProducts::COL_PRODUCT_ID, $id)->with('store')->get();
         } catch (ProductNotFoundException $e) {
             return response()->json(['error' => __('product_errors_not_found')], 404);
@@ -111,7 +112,7 @@ class ProductController extends BaseController
             $product =  $this->productService->update($id, $validated);
 
             // Load barcodes to return in response
-            $product?->load(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit']);
+            $product?->load(['barcodes', 'unit', 'sellUnit', 'components.component', 'components.unit', 'variants']);
         } catch (ProductNotFoundException $e) {
 
             return response()->json(['error' => __('product_errors_not_found')], 404);

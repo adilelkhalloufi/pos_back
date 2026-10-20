@@ -93,5 +93,6 @@ class DatabaseSeeder extends Seeder
     
         // Product scenarios are seeded manually when needed.
         $this->call(ProductScenariosSeeder::class);
+        $this->call(StorefrontDemoSeeder::class);
     }
 }

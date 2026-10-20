@@ -36,6 +36,11 @@ class StoreResource extends JsonResource
             Store::COL_TAX => $this->tax,
             Store::COL_LATITUDE => $this->latitude,
             Store::COL_LONGITUDE => $this->longitude,
+            Store::COL_PUBLIC_SLUG => $this->public_slug,
+            Store::COL_STOREFRONT_ENABLED => (bool) $this->storefront_enabled,
+            Store::COL_STOREFRONT_TITLE => $this->storefront_title,
+            Store::COL_STOREFRONT_DESCRIPTION => $this->storefront_description,
+            Store::COL_STOREFRONT_BANNER => $this->storefront_banner,
         ];
     }
 }

@@ -47,6 +47,11 @@ class Store extends BaseModel
     public const COL_COSTING_METHOD = 'costing_method';
 
     public const COL_TARGET_FOOD_COST_PERCENTAGE = 'target_food_cost_percentage';
+    public const COL_PUBLIC_SLUG = 'public_slug';
+    public const COL_STOREFRONT_ENABLED = 'storefront_enabled';
+    public const COL_STOREFRONT_TITLE = 'storefront_title';
+    public const COL_STOREFRONT_DESCRIPTION = 'storefront_description';
+    public const COL_STOREFRONT_BANNER = 'storefront_banner';
 
 
     public function owner()
@@ -99,5 +104,15 @@ class Store extends BaseModel
     public function recipes()
     {
         return $this->hasMany(Recipe::class, 'store_id');
+    }
+
+    public function storefrontProducts()
+    {
+        return $this->hasMany(StorefrontProduct::class, StorefrontProduct::COL_STORE_ID);
+    }
+
+    public function storefrontOrders()
+    {
+        return $this->hasMany(StorefrontOrder::class, StorefrontOrder::COL_STORE_ID);
     }
 }

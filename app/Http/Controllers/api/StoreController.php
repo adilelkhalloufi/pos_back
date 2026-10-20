@@ -6,6 +6,7 @@ use App\Http\Resources\StoreResource;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class StoreController
 {
@@ -35,8 +36,16 @@ class StoreController
             Store::COL_EMAIL => 'nullable|email',
             Store::COL_ZIP_CODE => 'nullable',
             Store::COL_CITY => 'nullable',
-            
+            Store::COL_PUBLIC_SLUG => 'nullable|string|max:120|unique:stores,public_slug,' . $id,
+            Store::COL_STOREFRONT_ENABLED => 'nullable|boolean',
+            Store::COL_STOREFRONT_TITLE => 'nullable|string|max:255',
+            Store::COL_STOREFRONT_DESCRIPTION => 'nullable|string|max:3000',
+            Store::COL_STOREFRONT_BANNER => 'nullable|string|max:255',
         ]);
+
+        if (array_key_exists(Store::COL_PUBLIC_SLUG, $validatedData) && empty($validatedData[Store::COL_PUBLIC_SLUG])) {
+            $validatedData[Store::COL_PUBLIC_SLUG] = Str::slug(($validatedData[Store::COL_NAME] ?? '') . '-' . $id);
+        }
         $store = Auth::user()
             ->stores()
             ->find($id);

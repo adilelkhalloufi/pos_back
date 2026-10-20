@@ -29,6 +29,9 @@ use App\Http\Controllers\api\UnitController;
 use App\Http\Controllers\api\UnitConversionController;
 use App\Http\Controllers\api\StockDeductionController;
 use App\Http\Controllers\api\StockController;
+use App\Http\Controllers\api\StorefrontCatalogController;
+use App\Http\Controllers\api\StorefrontController;
+use App\Http\Controllers\api\ProductVariantController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Middleware\EnsureTrialIsValid;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +43,10 @@ Route::post('/register', [UserController::class, 'register']);
 // Public plan routes
 Route::get('/plans', [PlanController::class, 'index']);
 Route::get('/plans/{plan}', [PlanController::class, 'show']);
+
+// Public storefront routes
+Route::get('/public/stores/{slug}', [StorefrontController::class, 'show']);
+Route::post('/public/stores/{slug}/orders', [StorefrontController::class, 'storeOrder']);
 
 Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (): void {
 
@@ -57,8 +64,13 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::resource('/products', ProductController::class);
     Route::post('/products/{id}', [ProductController::class, 'update']);
     Route::get('/products/{id}/stock-movements', [StockController::class, 'productStockMovements']);
-    
-    
+
+    Route::prefix('products/{product}/variants')->group(function () {
+        Route::get('/', [ProductVariantController::class, 'index']);
+        Route::post('/', [ProductVariantController::class, 'store']);
+        Route::put('/{variant}', [ProductVariantController::class, 'update']);
+        Route::delete('/{variant}', [ProductVariantController::class, 'destroy']);
+    });
 
     Route::get('/pos', [StoreProductsController::class, 'index']);
 
@@ -132,6 +144,18 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
         Route::post('/', [StoreProductsController::class, 'store']);
         Route::put('/{id}', [StoreProductsController::class, 'update']);
         Route::delete('/{id}', [StoreProductsController::class, 'destroy']);
+    });
+
+    // Storefront management routes
+    Route::prefix('storefront')->group(function () {
+        Route::get('/settings', [StorefrontCatalogController::class, 'settings']);
+        Route::put('/settings', [StorefrontCatalogController::class, 'updateSettings']);
+        Route::get('/products', [StorefrontCatalogController::class, 'index']);
+        Route::post('/products', [StorefrontCatalogController::class, 'store']);
+        Route::put('/products/{id}', [StorefrontCatalogController::class, 'update']);
+        Route::delete('/products/{id}', [StorefrontCatalogController::class, 'destroy']);
+        Route::get('/orders', [StorefrontCatalogController::class, 'orders']);
+        Route::get('/orders/{id}', [StorefrontCatalogController::class, 'showOrder']);
     });
 
     // // Stock Management Routes
