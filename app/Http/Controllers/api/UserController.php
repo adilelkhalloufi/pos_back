@@ -172,6 +172,29 @@ class UserController extends BaseController
         ], 201);
     }
 
+    public function createEmployee(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'nullable|string|max:255',
+            'password' => 'required|string|min:6',
+            'role' => 'nullable|string|in:owner,manager,vendor,viewer,inventory_manager,accountant',
+            'store_id' => 'nullable|integer|exists:stores,id',
+            'can_access_all_stores' => 'nullable|boolean',
+        ]);
+
+        $payload = $request->all();
+        $payload['role'] = $payload['role'] ?? ROLES::VENDOR->value;
+
+        $user = $this->userService->createUserForStore($payload);
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'message' => 'Employee created successfully',
+        ], 201);
+    }
+
     /**
      * Update user information
      */

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\api\AjustementController;
 use App\Http\Controllers\api\AlertController;
+use App\Http\Controllers\api\AttendanceController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\CustomerController;
 use App\Http\Controllers\api\DashbordController;
@@ -47,10 +48,16 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
 
     Route::post('/logout', [UserController::class, 'logout']);
 
+    Route::get('/attendance', [AttendanceController::class, 'index']);
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
+    Route::post('/attendance/mark-absence', [AttendanceController::class, 'markAbsence']);
+
     // Plan related routes
     Route::get('/user/plan', [PlanController::class, 'getUserPlan']);
 
     Route::resource('/users', UserController::class);
+    Route::post('/employees', [UserController::class, 'createEmployee']);
     Route::get('/users/{id}/sales', [UserController::class, 'sales']);
     Route::post('/users/{id}/change-password', [UserController::class, 'changePassword']);
 

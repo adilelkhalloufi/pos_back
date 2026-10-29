@@ -170,7 +170,10 @@ class User extends BaseModel implements AuthenticatableContract, FilamentUser
         return $this->hasMany(Product::class);
     }
 
- 
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 
     /**
      * Roles assigned to this user
