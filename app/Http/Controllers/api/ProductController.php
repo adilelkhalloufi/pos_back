@@ -7,10 +7,12 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\POSResource;
 use App\Http\Resources\ProductResource;
+use App\Models\OrderPurchaseItems;
 use App\Models\Product;
 use App\Models\StoreProducts;
 use App\Services\Product\Exceptions\ProductNotFoundException;
 use App\Services\Product\ProductService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -138,5 +140,72 @@ class ProductController extends BaseController
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get purchase history for a specific product.
+     * Endpoint: /products/{id}/purchases?from=YYYY-MM-DD&to=YYYY-MM-DD&supplier_id={id}
+     */
+    public function purchases(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'from' => ['nullable', 'date', 'before_or_equal:to'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
+        ]);
+
+        $product = Product::query()
+            ->with('unit')
+            ->when($this->storeId(), fn ($query) => $query->where(Product::COL_STORE_ID, $this->storeId()))
+            ->whereKey($id)
+            ->firstOrFail();
+
+        $query = OrderPurchaseItems::query()
+            ->with(['order.supplier', 'product'])
+            ->where('product_id', $product->id)
+            ->join('order_purchases', 'order_purchases.id', '=', 'order_purchase_items.order_id')
+            ->select('order_purchase_items.*')
+            ->where('order_purchases.store_id', $product->store_id ?? $this->storeId());
+
+        if (! empty($validated['supplier_id'])) {
+            $query->where('order_purchases.supplier_id', $validated['supplier_id']);
+        }
+
+        if (! empty($validated['from'])) {
+            $query->whereDate('order_purchases.created_at', '>=', $validated['from']);
+        }
+
+        if (! empty($validated['to'])) {
+            $query->whereDate('order_purchases.created_at', '<=', $validated['to']);
+        }
+
+        $purchases = $query
+            ->orderBy('order_purchases.created_at', 'desc')
+            ->get()
+            ->map(function (OrderPurchaseItems $item) {
+                $order = $item->order;
+
+                return [
+                    'id' => $item->id,
+                    'order_id' => $order?->id,
+                    'order_number' => $order?->order_number,
+                    'supplier_id' => $order?->supplier_id,
+                    'supplier' => $order?->supplier,
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product?->name ?? $item->name,
+                    'purchase_unit' => $item->product?->relationLoaded('unit') ? $item->product->unit : ($item->product?->unit ?? null),
+                    'sell_unit' => $item->product?->relationLoaded('sellUnit') ? $item->product->sellUnit : ($item->product?->sellUnit ?? null),
+                    'unit' => $item->product?->relationLoaded('unit') ? $item->product->unit : ($item->product?->unit ?? null),
+                    'quantity' => (int) $item->quantity,
+                    'price' => (float) $item->price,
+                    'total' => (float) $item->total,
+                    'created_at' => $order?->created_at?->format('Y-m-d H:i:s'),
+                ];
+            });
+
+        return response()->json([
+            'product' => new ProductResource($product),
+            'purchases' => $purchases,
+        ], 200);
     }
 }

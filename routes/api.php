@@ -55,6 +55,7 @@ Route::middleware(['auth:sanctum', EnsureTrialIsValid::class])->group(function (
     Route::post('/users/{id}/change-password', [UserController::class, 'changePassword']);
 
     Route::resource('/products', ProductController::class);
+    Route::get('/products/{id}/purchases', [ProductController::class, 'purchases']);
     Route::get('/products/{id}/stock-movements', [StockController::class, 'productStockMovements']);
     
 
