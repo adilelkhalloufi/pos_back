@@ -24,7 +24,7 @@ class UserController extends BaseController
 {
     public function __construct(
         private readonly UserService $userService,
-     ) {}
+    ) {}
 
     /**
      * Authenticate user and return token
@@ -158,7 +158,7 @@ class UserController extends BaseController
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:255',
             'password' => 'required|string',
-            'role' => 'required|string|in:owner,manager,vendor,viewer,inventory_manager,accountant',
+            'role' => 'required|string|in:owner,manager,vendor,viewer,inventory_manager,accountant,employee',
             'status' => 'nullable|string|in:active,inactive',
             'store_id' => 'nullable|integer|exists:stores,id',
             'can_access_all_stores' => 'nullable|boolean',
@@ -179,13 +179,13 @@ class UserController extends BaseController
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:255',
             'password' => 'required|string|min:6',
-            'role' => 'nullable|string|in:owner,manager,vendor,viewer,inventory_manager,accountant',
+            'role' => 'nullable|string|in:owner,manager,vendor,viewer,inventory_manager,accountant,employee',
             'store_id' => 'nullable|integer|exists:stores,id',
             'can_access_all_stores' => 'nullable|boolean',
         ]);
 
         $payload = $request->all();
-        $payload['role'] = $payload['role'] ?? ROLES::VENDOR->value;
+        $payload['role'] = $payload['role'] ?? ROLES::EMPLOYEE->value;
 
         $user = $this->userService->createUserForStore($payload);
 
@@ -193,6 +193,19 @@ class UserController extends BaseController
             'user' => new UserResource($user),
             'message' => 'Employee created successfully',
         ], 201);
+    }
+
+    public function employees(Request $request)
+    {
+        $employees = User::query()
+            ->where('role', ROLES::EMPLOYEE->value)
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => UserResource::collection($employees),
+            'count' => $employees->count(),
+        ]);
     }
 
     /**

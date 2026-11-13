@@ -11,10 +11,12 @@ class Attendance extends BaseModel
     protected $fillable = [
         'user_id',
         'date',
+        'attendance_code',
         'check_in_at',
         'check_out_at',
         'is_present',
         'status',
+        'work_units',
         'note',
     ];
 
@@ -23,6 +25,7 @@ class Attendance extends BaseModel
         'check_in_at' => 'datetime',
         'check_out_at' => 'datetime',
         'is_present' => 'boolean',
+        'work_units' => 'decimal:2',
     ];
 
     public function user()

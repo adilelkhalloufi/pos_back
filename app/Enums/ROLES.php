@@ -12,4 +12,5 @@ enum ROLES: string
     case INVENTORY_MANAGER = 'inventory_manager';
     case ACCOUNTANT = 'accountant';
     case SUPER_ADMIN = 'super_admin';
+    case EMPLOYEE = 'employee';
 }

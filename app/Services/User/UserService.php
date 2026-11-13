@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -176,11 +177,15 @@ class UserService
         ]);
 
         $roleName = $data['role'] ?? ROLES::VENDOR->value;
-        $userRole = Role::where('name', $roleName)->first();
-        if ($userRole) {
-            $storeId = $data['store_id'] ?? currentStoreId();
-            $user->assignRole($userRole, $storeId);
-        }
+        $userRole = Role::firstOrCreate(
+            ['name' => $roleName],
+            [
+                'display_name' => Str::headline($roleName),
+                'description' => Str::headline($roleName) . ' role',
+            ]
+        );
+        $storeId = $data['store_id'] ?? currentStoreId();
+        $user->assignRole($userRole, $storeId);
 
         // Handle store assignment based on can_access_all_stores flag
         if (isset($data['can_access_all_stores']) && $data['can_access_all_stores']) {
